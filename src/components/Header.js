@@ -65,7 +65,7 @@ const Header = ({ dataCount, playerStatus }) => {
       <div style={contentStyle}>
         <h1 style={titleStyle}>
           <Star size={28} color="#f59e0b" />
-          Fantacalcio Analyzer
+          Fantapippo
         </h1>
         
         <div style={statsStyle}>

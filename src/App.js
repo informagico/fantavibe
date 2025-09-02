@@ -1,5 +1,5 @@
 import { Search, Users } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import FileUpload from './components/FileUpload';
 import Header from './components/Header';
@@ -95,10 +95,17 @@ const App = () => {
     savePlayerStatus(newStatus);
   };
 
-  // Combina i dati normalizzati
-  const normalizedData = normalizePlayerData(fpediaData, fstatsData);
+  // 🚀 OTTIMIZZAZIONE: Memorizza i dati normalizzati e l'indice di ricerca
+  const normalizedDataWithIndex = useMemo(() => {
+    console.log('🔄 Ricalcolo dati normalizzati...');
+    return normalizePlayerData(fpediaData, fstatsData);
+  }, [fpediaData, fstatsData]);
 
-  // Stile container principale
+  // Per compatibilità con i componenti esistenti
+  const normalizedData = normalizedDataWithIndex.players;
+  const searchIndex = normalizedDataWithIndex.searchIndex;
+
+  // Stili
   const containerStyle = {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
@@ -197,6 +204,7 @@ const App = () => {
             onSearchChange={setSearchTerm}
             playerStatus={playerStatus}
             onStatusChange={handlePlayerStatusChange}
+            searchIndex={searchIndex} // 🚀 NUOVA PROP per ricerca veloce
           />
         )}
 
@@ -210,6 +218,23 @@ const App = () => {
           />
         )}
       </div>
+
+      {/* Performance stats per debug */}
+      {process.env.NODE_ENV === 'development' && normalizedData.length > 0 && (
+        <div style={{ 
+          position: 'fixed', 
+          bottom: '10px', 
+          right: '10px', 
+          background: 'rgba(0,0,0,0.8)', 
+          color: 'white', 
+          padding: '8px', 
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 1000
+        }}>
+          📊 {normalizedData.length} players | 🔍 {searchIndex?.size || 0} terms indexed
+        </div>
+      )}
 
       <style>{`
         @keyframes spin {

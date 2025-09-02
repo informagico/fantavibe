@@ -1,13 +1,22 @@
-// Utility per la gestione e normalizzazione dei dati giocatori
+// src/utils/dataUtils.js - Versione ottimizzata
 
 /**
- * Normalizza un nome per il matching tra dataset
- * @param {string} name - Nome da normalizzare
- * @returns {string} Nome normalizzato
+ * Cache per la normalizzazione dei nomi
+ */
+const nameNormalizationCache = new Map();
+
+/**
+ * Normalizza un nome per il matching tra dataset (con cache)
  */
 export const normalizeName = (name) => {
   if (!name) return '';
-  return name.toLowerCase()
+  
+  // Controlla la cache prima
+  if (nameNormalizationCache.has(name)) {
+    return nameNormalizationCache.get(name);
+  }
+  
+  const normalized = name.toLowerCase()
     .replace(/[àáâä]/g, 'a')
     .replace(/[èéêë]/g, 'e')
     .replace(/[ìíîï]/g, 'i')
@@ -17,26 +26,75 @@ export const normalizeName = (name) => {
     .replace(/[çć]/g, 'c')
     .replace(/[ß]/g, 'ss')
     .replace(/[^a-z\s]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
+  
+  // Salva nella cache
+  nameNormalizationCache.set(name, normalized);
+  return normalized;
 };
 
 /**
- * Combina i dati da FPEDIA e FSTATS
- * @param {Array} fpediaData - Dati dal file FPEDIA
- * @param {Array} fstatsData - Dati dal file FSTATS
- * @returns {Array} Array di giocatori con dati combinati
+ * Crea un indice di ricerca per performance ottimali
+ */
+const createSearchIndex = (players) => {
+  const index = new Map();
+  
+  players.forEach((player, idx) => {
+    const normalizedName = normalizeName(player.Nome);
+    const words = normalizedName.split(' ');
+    
+    // Indicizza nome completo
+    if (!index.has(normalizedName)) {
+      index.set(normalizedName, []);
+    }
+    index.get(normalizedName).push(idx);
+    
+    // Indicizza ogni parola singolarmente
+    words.forEach(word => {
+      if (word.length > 2) { // Solo parole significative
+        if (!index.has(word)) {
+          index.set(word, []);
+        }
+        index.get(word).push(idx);
+      }
+    });
+    
+    // Indicizza prefissi per ricerca tipo-ahead
+    for (let i = 3; i <= Math.min(normalizedName.length, 15); i++) {
+      const prefix = normalizedName.substring(0, i);
+      if (!index.has(prefix)) {
+        index.set(prefix, []);
+      }
+      index.get(prefix).push(idx);
+    }
+  });
+  
+  return index;
+};
+
+/**
+ * Combina i dati da FPEDIA e FSTATS con ottimizzazioni
  */
 export const normalizePlayerData = (fpediaData, fstatsData) => {
-  if (!fpediaData.length) return [];
+  if (!fpediaData.length) return { players: [], searchIndex: new Map() };
   
-  return fpediaData.map(fpediaPlayer => {
-    // Cerca il giocatore corrispondente in FSTATS
+  console.time('🚀 Data normalization optimized');
+  
+  // Crea un Map per FSTATS per lookup O(1)
+  const fstatsMap = new Map();
+  fstatsData.forEach(player => {
+    const normalizedName = normalizeName(player.Nome);
+    fstatsMap.set(normalizedName, player);
+  });
+  
+  console.log(`📊 FSTATS map created: ${fstatsMap.size} players indexed`);
+  
+  // Combina i dati
+  const players = fpediaData.map(fpediaPlayer => {
     const normalizedName = normalizeName(fpediaPlayer.Nome);
-    const fstatsPlayer = fstatsData.find(p => 
-      normalizeName(p.Nome) === normalizedName
-    );
+    const fstatsPlayer = fstatsMap.get(normalizedName);
 
-    // Crea un ID unico per il giocatore
     const playerId = fpediaPlayer.Nome 
       ? fpediaPlayer.Nome.replace(/\s+/g, '_').toLowerCase()
       : `player_${Math.random().toString(36).substr(2, 9)}`;
@@ -45,6 +103,7 @@ export const normalizePlayerData = (fpediaData, fstatsData) => {
       ...fpediaPlayer,
       fstatsData: fstatsPlayer || null,
       id: playerId,
+      normalizedName, // Pre-calcolato per performance
       // Campi normalizzati per consistenza
       convenienza: fpediaPlayer['Convenienza Potenziale'] || 0,
       fantamedia: fpediaPlayer['Fantamedia anno 2024-2025'] || 0,
@@ -52,49 +111,102 @@ export const normalizePlayerData = (fpediaData, fstatsData) => {
       punteggio: fpediaPlayer.Punteggio || 0
     };
   });
+  
+  // Crea indice di ricerca
+  const searchIndex = createSearchIndex(players);
+  
+  console.timeEnd('🚀 Data normalization optimized');
+  console.log(`✅ Created index for ${players.length} players with ${searchIndex.size} search terms`);
+  
+  // Statistiche di matching
+  const withFStats = players.filter(p => p.fstatsData !== null);
+  const matchingPercentage = Math.round((withFStats.length / players.length) * 100);
+  console.log(`🎯 FSTATS matching: ${withFStats.length}/${players.length} (${matchingPercentage}%)`);
+  
+  return { players, searchIndex };
 };
 
 /**
- * Filtra giocatori per ruolo
- * @param {Array} players - Array di giocatori
- * @param {string} role - Ruolo da filtrare
- * @returns {Array} Giocatori filtrati per ruolo
+ * Filtra giocatori per ruolo (mantenuta per compatibilità)
  */
 export const filterPlayersByRole = (players, role) => {
   return players.filter(player => player.Ruolo === role);
 };
 
 /**
+ * Ricerca ottimizzata usando l'indice pre-calcolato
+ */
+export const searchPlayers = (players, searchTerm, searchIndex = null) => {
+  if (!searchTerm || searchTerm.length < 2) return [];
+  
+  // Se abbiamo l'indice, usa la ricerca ottimizzata
+  if (searchIndex) {
+    return searchPlayersOptimized(players, searchIndex, searchTerm);
+  }
+  
+  // Fallback alla ricerca tradizionale (più lenta)
+  const normalizedSearch = normalizeName(searchTerm);
+  return players.filter(player => {
+    const normalizedPlayerName = normalizeName(player.Nome);
+    return normalizedPlayerName.includes(normalizedSearch);
+  }).slice(0, 50); // Limita i risultati
+};
+
+/**
+ * Ricerca ultra-veloce con indice
+ */
+const searchPlayersOptimized = (players, searchIndex, searchTerm) => {
+  const startTime = performance.now();
+  const normalizedSearch = normalizeName(searchTerm);
+  const resultIndices = new Set();
+  
+  // Ricerca nell'indice
+  for (let [key, indices] of searchIndex.entries()) {
+    if (key.includes(normalizedSearch)) {
+      indices.forEach(idx => resultIndices.add(idx));
+    }
+  }
+  
+  // Converti indici in giocatori e ordina
+  const results = Array.from(resultIndices)
+    .slice(0, 50) // Limita risultati
+    .map(idx => players[idx])
+    .sort((a, b) => {
+      const aName = a.normalizedName;
+      const bName = b.normalizedName;
+      
+      // Priorità: match esatto > prefisso > parziale
+      const aExact = aName === normalizedSearch ? 3 : 0;
+      const bExact = bName === normalizedSearch ? 3 : 0;
+      const aStarts = aName.startsWith(normalizedSearch) ? 2 : 0;
+      const bStarts = bName.startsWith(normalizedSearch) ? 2 : 0;
+      const aContains = aName.includes(normalizedSearch) ? 1 : 0;
+      const bContains = bName.includes(normalizedSearch) ? 1 : 0;
+      
+      const aScore = aExact + aStarts + aContains;
+      const bScore = bExact + bStarts + bContains;
+      
+      if (aScore !== bScore) return bScore - aScore;
+      
+      // Come criterio secondario, ordina per convenienza
+      return (b.convenienza || 0) - (a.convenienza || 0);
+    });
+  
+  const endTime = performance.now();
+  console.log(`🔍 Search "${searchTerm}" took ${Math.round(endTime - startTime)}ms - found ${results.length} results`);
+  
+  return results;
+};
+
+/**
  * Ordina giocatori per convenienza potenziale (decrescente)
- * @param {Array} players - Array di giocatori
- * @returns {Array} Giocatori ordinati
  */
 export const sortPlayersByConvenienza = (players) => {
   return [...players].sort((a, b) => (b.convenienza || 0) - (a.convenienza || 0));
 };
 
 /**
- * Cerca giocatori per nome
- * @param {Array} players - Array di giocatori
- * @param {string} searchTerm - Termine di ricerca
- * @returns {Array} Giocatori che corrispondono alla ricerca
- */
-export const searchPlayers = (players, searchTerm) => {
-  if (!searchTerm) return [];
-  
-  const normalizedSearch = normalizeName(searchTerm);
-  
-  return players.filter(player => {
-    const normalizedPlayerName = normalizeName(player.Nome);
-    return normalizedPlayerName.includes(normalizedSearch);
-  });
-};
-
-/**
  * Ottiene statistiche riassuntive per un ruolo
- * @param {Array} players - Array di giocatori
- * @param {string} role - Ruolo da analizzare
- * @returns {Object} Statistiche del ruolo
  */
 export const getRoleStats = (players, role) => {
   const rolePlayers = filterPlayersByRole(players, role);
@@ -115,8 +227,6 @@ export const getRoleStats = (players, role) => {
 
 /**
  * Verifica se un giocatore ha statistiche FStats
- * @param {Object} player - Giocatore da verificare
- * @returns {boolean} True se ha dati FStats
  */
 export const hasFStatsData = (player) => {
   return player.fstatsData !== null && player.fstatsData !== undefined;
@@ -124,8 +234,6 @@ export const hasFStatsData = (player) => {
 
 /**
  * Ottiene la percentuale di matching tra FPEDIA e FSTATS
- * @param {Array} players - Array di giocatori normalizzati
- * @returns {number} Percentuale di matching (0-100)
  */
 export const getMatchingPercentage = (players) => {
   if (!players.length) return 0;
@@ -136,8 +244,6 @@ export const getMatchingPercentage = (players) => {
 
 /**
  * Valida i dati di un giocatore
- * @param {Object} player - Giocatore da validare
- * @returns {Object} Oggetto con risultato validazione e errori
  */
 export const validatePlayer = (player) => {
   const errors = [];
@@ -157,5 +263,20 @@ export const validatePlayer = (player) => {
   return {
     isValid: errors.length === 0,
     errors
+  };
+};
+
+/**
+ * Utility per debouncing
+ */
+export const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
   };
 };
