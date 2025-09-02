@@ -209,7 +209,7 @@ const App = () => {
             }}
           >
             <Users size={18} />
-            Top 20 per Ruolo
+            Classifica per Ruolo
           </button>
         </div>
       </div>

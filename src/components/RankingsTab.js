@@ -1,4 +1,4 @@
-// src/components/RankingsTab.js - Versione aggiornata
+// src/components/RankingsTab.js - Versione senza limiti sui giocatori
 import React, { useMemo } from 'react';
 import { filterPlayersByRole, sortPlayersByConvenienza } from '../utils/dataUtils';
 import PlayerCard from './PlayerCard';
@@ -9,13 +9,13 @@ const RankingsTab = ({
   onRoleChange, 
   playerStatus, 
   onStatusChange,
-  onPlayerAcquire // 🆕 Nuova prop per gestire l'acquisto
+  onPlayerAcquire
 }) => {
-  // Top giocatori per ruolo
+  // TUTTI i giocatori per ruolo (rimosso il limite dei 20)
   const topPlayers = useMemo(() => {
     const filtered = filterPlayersByRole(data, selectedRole);
     const sorted = sortPlayersByConvenienza(filtered);
-    return sorted.slice(0, 20);
+    return sorted; // ✅ Mostra tutti i giocatori, non solo i primi 20
   }, [data, selectedRole]);
 
   const roles = [
@@ -150,7 +150,7 @@ const RankingsTab = ({
     
     return {
       total: totalPlayers,
-      showing: Math.min(20, totalPlayers),
+      showing: totalPlayers, // ✅ Aggiornato per mostrare il numero totale
       avgConvenienza
     };
   }
@@ -162,7 +162,7 @@ const RankingsTab = ({
       {/* Header */}
       <div style={headerStyle}>
         <h2 style={titleStyle}>
-          🏆 Top 20 Giocatori per Ruolo
+          🏆 Classifica Completa per Ruolo
         </h2>
         
         {/* Role Selection */}
@@ -193,24 +193,6 @@ const RankingsTab = ({
             </button>
           ))}
         </div>
-
-        {/* Stats Cards */}
-        <div style={statsStyle}>
-          <div style={statCardStyle}>
-            <div style={statValueStyle}>{stats.total}</div>
-            <div style={statLabelStyle}>Giocatori Totali</div>
-          </div>
-          
-          <div style={statCardStyle}>
-            <div style={statValueStyle}>{stats.showing}</div>
-            <div style={statLabelStyle}>Mostrati (Top 20)</div>
-          </div>
-          
-          <div style={statCardStyle}>
-            <div style={statValueStyle}>{stats.avgConvenienza}</div>
-            <div style={statLabelStyle}>Convenienza Media</div>
-          </div>
-        </div>
       </div>
 
       {/* Results */}
@@ -218,16 +200,18 @@ const RankingsTab = ({
         <div style={gridStyle}>
           {topPlayers.map((player, index) => (
             <div key={player.id} style={{ position: 'relative' }}>
-              {/* Rank badge */}
-              <div style={rankBadgeStyle(index)}>
-                {index + 1}
-              </div>
+              {/* Rank badge - mostra solo per i primi 10 per evitare troppo rumore visivo */}
+              {index < 10 && (
+                <div style={rankBadgeStyle(index)}>
+                  {index + 1}
+                </div>
+              )}
               
               <PlayerCard
                 player={player}
                 playerStatus={playerStatus}
                 onStatusChange={onStatusChange}
-                onAcquire={onPlayerAcquire} // 🆕 Pass the acquire handler
+                onAcquire={onPlayerAcquire}
               />
             </div>
           ))}
@@ -244,7 +228,7 @@ const RankingsTab = ({
         </div>
       )}
 
-      {/* Current role indicator */}
+      {/* Current role indicator with player count */}
       <div style={{
         position: 'fixed',
         bottom: '20px',
@@ -258,7 +242,7 @@ const RankingsTab = ({
         boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
         zIndex: 100
       }}>
-        {roles.find(r => r.key === selectedRole)?.emoji} {selectedRole}
+        {roles.find(r => r.key === selectedRole)?.emoji} {selectedRole} • {stats.total} giocatori
       </div>
     </div>
   );
