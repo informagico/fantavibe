@@ -1,24 +1,29 @@
-import { Filter } from 'lucide-react';
+// src/components/RankingsTab.js - Versione aggiornata
 import React, { useMemo } from 'react';
+import { filterPlayersByRole, sortPlayersByConvenienza } from '../utils/dataUtils';
 import PlayerCard from './PlayerCard';
 
-const RankingsTab = ({ data, selectedRole, onRoleChange, playerStatus, onStatusChange }) => {
-  const roleNames = {
-    'ATT': 'Attaccanti',
-    'DIF': 'Difensori', 
-    'CEN': 'Centrocampisti',
-    'POR': 'Portieri'
-  };
-
-  // Top 20 giocatori per ruolo ordinati per Convenienza Potenziale
-  const topPlayersByRole = useMemo(() => {
-    if (!data.length) return [];
-    
-    return data
-      .filter(player => player.Ruolo === selectedRole)
-      .sort((a, b) => (b['Convenienza Potenziale'] || 0) - (a['Convenienza Potenziale'] || 0))
-      .slice(0, 20);
+const RankingsTab = ({ 
+  data, 
+  selectedRole, 
+  onRoleChange, 
+  playerStatus, 
+  onStatusChange,
+  onPlayerAcquire // 🆕 Nuova prop per gestire l'acquisto
+}) => {
+  // Top giocatori per ruolo
+  const topPlayers = useMemo(() => {
+    const filtered = filterPlayersByRole(data, selectedRole);
+    const sorted = sortPlayersByConvenienza(filtered);
+    return sorted.slice(0, 20);
   }, [data, selectedRole]);
+
+  const roles = [
+    { key: 'ATT', label: 'Attaccanti', emoji: '⚽' },
+    { key: 'CEN', label: 'Centrocampisti', emoji: '🎯' },
+    { key: 'DIF', label: 'Difensori', emoji: '🛡️' },
+    { key: 'POR', label: 'Portieri', emoji: '🥅' }
+  ];
 
   const containerStyle = {
     width: '100%'
@@ -28,144 +33,233 @@ const RankingsTab = ({ data, selectedRole, onRoleChange, playerStatus, onStatusC
     marginBottom: '2rem'
   };
 
-  const headerTitleStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    marginBottom: '1.5rem'
-  };
-
   const titleStyle = {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#1e293b'
+    fontSize: '1.5rem',
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: '1rem',
+    textAlign: 'center'
   };
 
   const roleButtonsStyle = {
     display: 'flex',
+    justifyContent: 'center',
+    gap: '0.75rem',
     flexWrap: 'wrap',
-    gap: '0.75rem'
-  };
-
-  const roleButtonBaseStyle = {
-    padding: '0.75rem 1.25rem',
-    borderRadius: '8px',
-    fontWeight: '500',
-    border: '2px solid transparent',
-    cursor: 'pointer',
-    transition: 'all 0.2s'
-  };
-
-  const activeRoleButtonStyle = {
-    ...roleButtonBaseStyle,
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    borderColor: '#3b82f6'
-  };
-
-  const inactiveRoleButtonStyle = {
-    ...roleButtonBaseStyle,
-    backgroundColor: 'white',
-    color: '#64748b',
-    borderColor: '#e2e8f0'
-  };
-
-  const rankingTitleStyle = {
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    color: '#1e293b',
     marginBottom: '1.5rem'
   };
 
-  const rankingListStyle = {
-    display: 'grid',
-    gap: '1rem'
+  const roleButtonStyle = {
+    padding: '0.75rem 1.5rem',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '0.875rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    minWidth: '140px',
+    justifyContent: 'center'
   };
 
-  const rankedPlayerStyle = {
-    position: 'relative'
-  };
-
-  const rankBadgeStyle = {
-    position: 'absolute',
-    left: '-0.5rem',
-    top: '1rem',
-    zIndex: 10,
-    width: '2.5rem',
-    height: '2.5rem',
+  const activeRoleButtonStyle = {
     backgroundColor: '#3b82f6',
     color: 'white',
+    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
+  };
+
+  const inactiveRoleButtonStyle = {
+    backgroundColor: 'white',
+    color: '#6b7280',
+    border: '2px solid #e5e7eb'
+  };
+
+  const statsStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+    gap: '1rem',
+    marginBottom: '2rem'
+  };
+
+  const statCardStyle = {
+    backgroundColor: 'white',
+    padding: '1.25rem',
+    borderRadius: '10px',
+    border: '2px solid #e5e7eb',
+    textAlign: 'center'
+  };
+
+  const statValueStyle = {
+    fontSize: '1.75rem',
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: '0.25rem'
+  };
+
+  const statLabelStyle = {
+    fontSize: '0.875rem',
+    color: '#6b7280',
+    fontWeight: '500'
+  };
+
+  const gridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '1.5rem'
+  };
+
+  const emptyStateStyle = {
+    textAlign: 'center',
+    padding: '4rem 2rem',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    border: '2px dashed #e5e7eb'
+  };
+
+  const rankBadgeStyle = (index) => ({
+    position: 'absolute',
+    top: '-8px',
+    left: '-8px',
+    width: '32px',
+    height: '32px',
     borderRadius: '50%',
+    backgroundColor: getRankColor(index),
+    color: 'white',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '0.875rem',
-    fontWeight: 'bold',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  };
+    fontWeight: '700',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+  });
 
-  const playerCardContainerStyle = {
-    marginLeft: '2rem'
-  };
+  function getRankColor(index) {
+    if (index === 0) return '#ffd700'; // Oro
+    if (index === 1) return '#c0c0c0'; // Argento  
+    if (index === 2) return '#cd7f32'; // Bronzo
+    return '#6b7280'; // Grigio per gli altri
+  }
+
+  function getRoleStats() {
+    const totalPlayers = filterPlayersByRole(data, selectedRole).length;
+    const avgConvenienza = topPlayers.length > 0 
+      ? (topPlayers.reduce((sum, p) => sum + (p.convenienza || 0), 0) / topPlayers.length).toFixed(1)
+      : '0';
+    
+    return {
+      total: totalPlayers,
+      showing: Math.min(20, totalPlayers),
+      avgConvenienza
+    };
+  }
+
+  const stats = getRoleStats();
 
   return (
     <div style={containerStyle}>
+      {/* Header */}
       <div style={headerStyle}>
-        <div style={headerTitleStyle}>
-          <Filter size={20} color="#64748b" />
-          <h2 style={titleStyle}>Top 20 per Ruolo</h2>
-        </div>
+        <h2 style={titleStyle}>
+          🏆 Top 20 Giocatori per Ruolo
+        </h2>
         
+        {/* Role Selection */}
         <div style={roleButtonsStyle}>
-          {Object.entries(roleNames).map(([role, name]) => (
+          {roles.map(role => (
             <button
-              key={role}
-              onClick={() => onRoleChange(role)}
-              style={selectedRole === role ? activeRoleButtonStyle : inactiveRoleButtonStyle}
+              key={role.key}
+              onClick={() => onRoleChange(role.key)}
+              style={{
+                ...roleButtonStyle,
+                ...(selectedRole === role.key ? activeRoleButtonStyle : inactiveRoleButtonStyle)
+              }}
               onMouseEnter={(e) => {
-                if (selectedRole !== role) {
-                  e.target.style.backgroundColor = '#f8fafc';
-                  e.target.style.borderColor = '#cbd5e1';
+                if (selectedRole !== role.key) {
+                  e.target.style.backgroundColor = '#f9fafb';
+                  e.target.style.borderColor = '#d1d5db';
                 }
               }}
               onMouseLeave={(e) => {
-                if (selectedRole !== role) {
+                if (selectedRole !== role.key) {
                   e.target.style.backgroundColor = 'white';
-                  e.target.style.borderColor = '#e2e8f0';
+                  e.target.style.borderColor = '#e5e7eb';
                 }
               }}
             >
-              {name}
+              <span>{role.emoji}</span>
+              {role.label}
             </button>
           ))}
         </div>
-      </div>
 
-      {topPlayersByRole.length > 0 && (
-        <div>
-          <h3 style={rankingTitleStyle}>
-            🏆 Top 20 {roleNames[selectedRole]} - Ordinati per Convenienza Potenziale
-          </h3>
+        {/* Stats Cards */}
+        <div style={statsStyle}>
+          <div style={statCardStyle}>
+            <div style={statValueStyle}>{stats.total}</div>
+            <div style={statLabelStyle}>Giocatori Totali</div>
+          </div>
           
-          <div style={rankingListStyle}>
-            {topPlayersByRole.map((player, index) => (
-              <div key={player.id} style={rankedPlayerStyle}>
-                <div style={rankBadgeStyle}>
-                  {index + 1}
-                </div>
-                <div style={playerCardContainerStyle}>
-                  <PlayerCard
-                    player={player}
-                    status={playerStatus[player.id] || 'none'}
-                    onStatusChange={onStatusChange}
-                    showRanking={false}
-                  />
-                </div>
-              </div>
-            ))}
+          <div style={statCardStyle}>
+            <div style={statValueStyle}>{stats.showing}</div>
+            <div style={statLabelStyle}>Mostrati (Top 20)</div>
+          </div>
+          
+          <div style={statCardStyle}>
+            <div style={statValueStyle}>{stats.avgConvenienza}</div>
+            <div style={statLabelStyle}>Convenienza Media</div>
           </div>
         </div>
+      </div>
+
+      {/* Results */}
+      {topPlayers.length > 0 ? (
+        <div style={gridStyle}>
+          {topPlayers.map((player, index) => (
+            <div key={player.id} style={{ position: 'relative' }}>
+              {/* Rank badge */}
+              <div style={rankBadgeStyle(index)}>
+                {index + 1}
+              </div>
+              
+              <PlayerCard
+                player={player}
+                playerStatus={playerStatus}
+                onStatusChange={onStatusChange}
+                onAcquire={onPlayerAcquire} // 🆕 Pass the acquire handler
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={emptyStateStyle}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🤷‍♂️</div>
+          <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: '#374151' }}>
+            Nessun giocatore trovato per questo ruolo
+          </p>
+          <p style={{ color: '#9ca3af' }}>
+            Verifica che i dati siano stati caricati correttamente
+          </p>
+        </div>
       )}
+
+      {/* Current role indicator */}
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        left: '20px',
+        backgroundColor: 'rgba(59, 130, 246, 0.9)',
+        color: 'white',
+        padding: '0.75rem 1rem',
+        borderRadius: '25px',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        zIndex: 100
+      }}>
+        {roles.find(r => r.key === selectedRole)?.emoji} {selectedRole}
+      </div>
     </div>
   );
 };

@@ -1,12 +1,14 @@
+// src/App.js - Versione aggiornata con sistema fantamilioni
 import { Search, Users } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import FantamilioniModal from './components/FantamilioniModal';
 import FileUpload from './components/FileUpload';
 import Header from './components/Header';
 import RankingsTab from './components/RankingsTab';
 import SearchTab from './components/SearchTab';
 import { normalizePlayerData } from './utils/dataUtils';
-import { loadPlayerStatus, savePlayerStatus } from './utils/storage';
+import { loadPlayerStatus, savePlayerStatus, updatePlayerStatus } from './utils/storage';
 
 const App = () => {
   // Stati principali
@@ -18,6 +20,10 @@ const App = () => {
   const [selectedRole, setSelectedRole] = useState('ATT');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Stati per la modal fantamilioni
+  const [showFantamilioniModal, setShowFantamilioniModal] = useState(false);
+  const [playerToAcquire, setPlayerToAcquire] = useState(null);
 
   // Carica status giocatori all'avvio
   useEffect(() => {
@@ -83,16 +89,43 @@ const App = () => {
     reader.readAsBinaryString(file);
   };
 
-  // Gestione status giocatori
+  // Gestione status giocatori normale (senza fantamilioni)
   const handlePlayerStatusChange = (playerId, status) => {
-    const newStatus = { ...playerStatus };
-    if (status === 'none') {
-      delete newStatus[playerId];
-    } else {
-      newStatus[playerId] = status;
-    }
+    const newStatus = updatePlayerStatus(playerStatus, playerId, status);
     setPlayerStatus(newStatus);
     savePlayerStatus(newStatus);
+  };
+
+  // Gestione acquisto giocatore (con modal fantamilioni)
+  const handlePlayerAcquire = (player) => {
+    setPlayerToAcquire(player);
+    setShowFantamilioniModal(true);
+  };
+
+  // Conferma acquisto con fantamilioni
+  const handleConfirmAcquire = (fantamilioni) => {
+    if (playerToAcquire) {
+      const newStatus = updatePlayerStatus(
+        playerStatus, 
+        playerToAcquire.id, 
+        'acquired', 
+        fantamilioni
+      );
+      setPlayerStatus(newStatus);
+      savePlayerStatus(newStatus);
+      
+      console.log(`${playerToAcquire.Nome} acquistato per ${fantamilioni} fantamilioni`);
+    }
+    
+    // Reset modal
+    setPlayerToAcquire(null);
+    setShowFantamilioniModal(false);
+  };
+
+  // Chiusura modal
+  const handleCloseFantamilioniModal = () => {
+    setPlayerToAcquire(null);
+    setShowFantamilioniModal(false);
   };
 
   // 🚀 OTTIMIZZAZIONE: Memorizza i dati normalizzati e l'indice di ricerca
@@ -204,7 +237,8 @@ const App = () => {
             onSearchChange={setSearchTerm}
             playerStatus={playerStatus}
             onStatusChange={handlePlayerStatusChange}
-            searchIndex={searchIndex} // 🚀 NUOVA PROP per ricerca veloce
+            onPlayerAcquire={handlePlayerAcquire} // 🆕 Nuova prop
+            searchIndex={searchIndex}
           />
         )}
 
@@ -215,9 +249,18 @@ const App = () => {
             onRoleChange={setSelectedRole}
             playerStatus={playerStatus}
             onStatusChange={handlePlayerStatusChange}
+            onPlayerAcquire={handlePlayerAcquire} // 🆕 Nuova prop
           />
         )}
       </div>
+
+      {/* Modal Fantamilioni */}
+      <FantamilioniModal
+        isOpen={showFantamilioniModal}
+        onClose={handleCloseFantamilioniModal}
+        playerName={playerToAcquire?.Nome || ''}
+        onConfirm={handleConfirmAcquire}
+      />
 
       {/* Performance stats per debug */}
       {process.env.NODE_ENV === 'development' && normalizedData.length > 0 && (

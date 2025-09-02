@@ -1,339 +1,321 @@
-import { Award, Minus, TrendingDown, TrendingUp, UserCheck, UserX } from 'lucide-react';
+// src/components/PlayerCard.js - Versione aggiornata con fantamilioni
 import React from 'react';
+import { getPlayerDetails } from '../utils/storage';
 
-const PlayerCard = ({ player, status, onStatusChange }) => {
-  const fstats = player.fstatsData;
+const PlayerCard = ({ 
+  player, 
+  playerStatus, 
+  onStatusChange,
+  onAcquire // Nuova prop per gestire l'acquisto con fantamilioni
+}) => {
+  const playerDetails = getPlayerDetails(playerStatus, player.id);
+  const currentStatus = playerDetails?.status || 'available';
+  const fantamilioni = playerDetails?.fantamilioni || null;
 
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === 'acquired' && onAcquire) {
+      // Per l'acquisto, chiama la funzione speciale che aprirà la modal
+      onAcquire(player);
+    } else {
+      // Per altri status, usa la funzione normale
+      onStatusChange(player.id, newStatus);
+    }
+  };
+
+  // Stili base
   const cardStyle = {
     backgroundColor: 'white',
+    border: '2px solid #e5e7eb',
     borderRadius: '12px',
-    padding: '1.5rem',
-    border: '1px solid #e2e8f0',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    transition: 'transform 0.2s, box-shadow 0.2s'
+    padding: '1rem',
+    transition: 'all 0.2s',
+    position: 'relative',
+    overflow: 'hidden'
   };
 
   const headerStyle = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '1.25rem',
-    flexWrap: 'wrap',
-    gap: '1rem'
-  };
-
-  const playerInfoStyle = {
-    flex: 1,
-    minWidth: '200px'
+    marginBottom: '0.75rem'
   };
 
   const nameStyle = {
-    fontSize: '1.375rem',
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: '0.5rem'
+    fontSize: '1.1rem',
+    fontWeight: '600',
+    color: '#1f2937',
+    margin: 0,
+    lineHeight: '1.3'
   };
 
-  const detailsStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    flexWrap: 'wrap'
-  };
-
-  const roleBadgeStyle = {
-    padding: '0.25rem 0.75rem',
-    backgroundColor: '#dbeafe',
-    color: '#1e40af',
-    fontSize: '0.875rem',
-    borderRadius: '6px',
-    fontWeight: '500'
+  const roleStyle = {
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '4px',
+    color: 'white',
+    backgroundColor: getRoleColor(player.Ruolo),
+    textAlign: 'center',
+    minWidth: '40px'
   };
 
   const teamStyle = {
-    color: '#64748b',
-    fontWeight: '500'
+    fontSize: '0.875rem',
+    color: '#6b7280',
+    fontWeight: '500',
+    marginBottom: '0.75rem'
   };
 
-  const trendIconStyle = {
-    display: 'flex',
-    alignItems: 'center'
-  };
-
-  const statusButtonsStyle = {
-    display: 'flex',
-    gap: '0.5rem',
-    alignItems: 'center',
-    flexWrap: 'wrap'
-  };
-
-  const statusButtonStyle = {
-    padding: '0.75rem',
-    borderRadius: '8px',
-    border: '2px solid',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    backgroundColor: 'transparent'
-  };
-
-  const mineButtonStyle = {
-    ...statusButtonStyle,
-    backgroundColor: status === 'mine' ? '#dcfce7' : '#f8fafc',
-    color: status === 'mine' ? '#166534' : '#64748b',
-    borderColor: status === 'mine' ? '#16a34a' : '#e2e8f0'
-  };
-
-  const othersButtonStyle = {
-    ...statusButtonStyle,
-    backgroundColor: status === 'others' ? '#fee2e2' : '#f8fafc',
-    color: status === 'others' ? '#dc2626' : '#64748b',
-    borderColor: status === 'others' ? '#ef4444' : '#e2e8f0'
-  };
-
-  const statusBadgeStyle = {
-    padding: '0.375rem 0.75rem',
-    borderRadius: '6px',
-    fontSize: '0.75rem',
-    fontWeight: '600'
-  };
-
-  const mineStatusStyle = {
-    ...statusBadgeStyle,
-    backgroundColor: '#dcfce7',
-    color: '#166534'
-  };
-
-  const othersStatusStyle = {
-    ...statusBadgeStyle,
-    backgroundColor: '#fee2e2',
-    color: '#dc2626'
-  };
-
-  const statsGridStyle = {
+  const statsStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1.25rem'
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '0.5rem',
+    marginBottom: '1rem'
   };
 
-  const statCardStyle = {
-    textAlign: 'center',
-    padding: '1rem',
-    borderRadius: '8px',
-    border: '1px solid'
-  };
-
-  const statCards = {
-    purple: { ...statCardStyle, backgroundColor: '#faf5ff', borderColor: '#e9d5ff' },
-    blue: { ...statCardStyle, backgroundColor: '#eff6ff', borderColor: '#bfdbfe' },
-    green: { ...statCardStyle, backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
-    yellow: { ...statCardStyle, backgroundColor: '#fefce8', borderColor: '#fde047' }
+  const statItemStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: '0.5rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '6px'
   };
 
   const statValueStyle = {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    marginBottom: '0.25rem'
-  };
-
-  const statValues = {
-    purple: { ...statValueStyle, color: '#7c3aed' },
-    blue: { ...statValueStyle, color: '#2563eb' },
-    green: { ...statValueStyle, color: '#16a34a' },
-    yellow: { ...statValueStyle, color: '#ca8a04' }
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#1f2937'
   };
 
   const statLabelStyle = {
     fontSize: '0.75rem',
-    color: '#64748b',
-    fontWeight: '500'
+    color: '#6b7280',
+    marginTop: '0.25rem'
   };
 
-  const advancedStatsStyle = {
-    padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0',
+  const buttonContainerStyle = {
+    display: 'flex',
+    gap: '0.5rem',
     marginTop: '1rem'
   };
 
-  const advancedTitleStyle = {
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '0.75rem',
+  const buttonStyle = {
+    flex: 1,
+    padding: '0.5rem',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    justifyContent: 'center',
+    gap: '0.25rem'
   };
 
-  const advancedGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-    gap: '0.75rem'
-  };
-
-  const skillsStyle = {
-    marginTop: '1rem'
-  };
-
-  const skillsTitleStyle = {
-    fontWeight: '600',
-    color: '#1e293b',
-    marginBottom: '0.5rem'
-  };
-
-  const skillsGridStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.5rem'
-  };
-
-  const skillBadgeStyle = {
-    padding: '0.25rem 0.5rem',
-    backgroundColor: '#e0e7ff',
-    color: '#3730a3',
+  // Fantamilioni display
+  const fantamilioniStyle = {
+    position: 'absolute',
+    top: '0.75rem',
+    right: '0.75rem',
+    backgroundColor: '#10b981',
+    color: 'white',
     fontSize: '0.75rem',
-    borderRadius: '4px',
-    border: '1px solid #c7d2fe'
+    fontWeight: '600',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '12px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
   };
 
-  const getTrendIcon = () => {
-    if (player.Trend === 'UP') return <TrendingUp size={16} color="#16a34a" />;
-    if (player.Trend === 'DOWN') return <TrendingDown size={16} color="#dc2626" />;
-    return <Minus size={16} color="#ca8a04" />;
+  // Status indicator
+  const statusIndicatorStyle = {
+    position: 'absolute',
+    top: '-2px',
+    left: '-2px',
+    right: '-2px',
+    height: '4px',
+    backgroundColor: getStatusColor(currentStatus),
+    borderRadius: '12px 12px 0 0'
   };
 
-  const parseSkills = () => {
-    try {
-      if (!player.Skills) return [];
-      return JSON.parse(player.Skills.replace(/'/g, '"'));
-    } catch {
-      return [];
+  function getRoleColor(ruolo) {
+    switch (ruolo) {
+      case 'POR': return '#8b5cf6';
+      case 'DIF': return '#06b6d4';
+      case 'CEN': return '#10b981';
+      case 'ATT': return '#f59e0b';
+      default: return '#6b7280';
     }
+  }
+
+  function getStatusColor(status) {
+    switch (status) {
+      case 'acquired': return '#10b981';
+      case 'unavailable': return '#ef4444';
+      default: return 'transparent';
+    }
+  }
+
+  function getStatusButtons() {
+    return (
+      <div style={buttonContainerStyle}>
+        <button
+          onClick={() => handleStatusChange('acquired')}
+          style={{
+            ...buttonStyle,
+            backgroundColor: currentStatus === 'acquired' ? '#10b981' : '#f0fdf4',
+            color: currentStatus === 'acquired' ? 'white' : '#15803d',
+            border: currentStatus === 'acquired' ? 'none' : '1px solid #bbf7d0'
+          }}
+          onMouseEnter={(e) => {
+            if (currentStatus !== 'acquired') {
+              e.target.style.backgroundColor = '#dcfce7';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentStatus !== 'acquired') {
+              e.target.style.backgroundColor = '#f0fdf4';
+            }
+          }}
+        >
+          {currentStatus === 'acquired' ? '✓ Acquistato' : '+ Acquista'}
+        </button>
+        
+        <button
+          onClick={() => handleStatusChange('unavailable')}
+          style={{
+            ...buttonStyle,
+            backgroundColor: currentStatus === 'unavailable' ? '#ef4444' : '#fef2f2',
+            color: currentStatus === 'unavailable' ? 'white' : '#dc2626',
+            border: currentStatus === 'unavailable' ? 'none' : '1px solid #fecaca'
+          }}
+          onMouseEnter={(e) => {
+            if (currentStatus !== 'unavailable') {
+              e.target.style.backgroundColor = '#fee2e2';
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (currentStatus !== 'unavailable') {
+              e.target.style.backgroundColor = '#fef2f2';
+            }
+          }}
+        >
+          {currentStatus === 'unavailable' ? '✗ Non Disp.' : '✗ Non Disp.'}
+        </button>
+        
+        {(currentStatus === 'acquired' || currentStatus === 'unavailable') && (
+          <button
+            onClick={() => handleStatusChange('available')}
+            style={{
+              ...buttonStyle,
+              backgroundColor: '#f8fafc',
+              color: '#64748b',
+              border: '1px solid #e2e8f0'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#f1f5f9';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#f8fafc';
+            }}
+          >
+            ↺ Reset
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Modifica lo stile della card basato sullo status
+  const enhancedCardStyle = {
+    ...cardStyle,
+    borderColor: currentStatus === 'acquired' ? '#10b981' : 
+                currentStatus === 'unavailable' ? '#ef4444' : '#e5e7eb',
+    backgroundColor: currentStatus === 'acquired' ? '#f0fdf4' : 
+                    currentStatus === 'unavailable' ? '#fef2f2' : 'white'
   };
 
   return (
-    <div 
-      style={cardStyle}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-      }}
-    >
+    <div style={enhancedCardStyle}>
+      {/* Status indicator */}
+      <div style={statusIndicatorStyle} />
+      
+      {/* Fantamilioni badge (solo se acquistato) */}
+      {currentStatus === 'acquired' && fantamilioni && (
+        <div style={fantamilioniStyle}>
+          {fantamilioni} FM
+        </div>
+      )}
+      
+      {/* Header */}
       <div style={headerStyle}>
-        <div style={playerInfoStyle}>
-          <h3 style={nameStyle}>{player.Nome || 'Nome non disponibile'}</h3>
-          <div style={detailsStyle}>
-            <span style={roleBadgeStyle}>{player.Ruolo}</span>
-            <span style={teamStyle}>{player.Squadra}</span>
-            <div style={trendIconStyle}>{getTrendIcon()}</div>
-          </div>
+        <div>
+          <h3 style={nameStyle}>{player.Nome}</h3>
+          <div style={teamStyle}>{player.Squadra}</div>
         </div>
-        
-        <div style={statusButtonsStyle}>
-          <button
-            onClick={() => onStatusChange(player.id, status === 'mine' ? 'none' : 'mine')}
-            style={mineButtonStyle}
-            title="Acquistato da me"
-          >
-            <UserCheck size={16} />
-          </button>
-          
-          <button
-            onClick={() => onStatusChange(player.id, status === 'others' ? 'none' : 'others')}
-            style={othersButtonStyle}
-            title="Acquistato da altri"
-          >
-            <UserX size={16} />
-          </button>
-          
-          {status !== 'none' && (
-            <span style={status === 'mine' ? mineStatusStyle : othersStatusStyle}>
-              {status === 'mine' ? 'Mio' : 'Altri'}
-            </span>
-          )}
-        </div>
+        <div style={roleStyle}>{player.Ruolo}</div>
       </div>
 
-      <div style={statsGridStyle}>
-        <div style={statCards.purple}>
-          <div style={statValues.purple}>
-            {player['Convenienza Potenziale'] || 'N/A'}
+      {/* Stats */}
+      <div style={statsStyle}>
+        <div style={statItemStyle}>
+          <div style={statValueStyle}>
+            {player.convenienza ? player.convenienza.toFixed(1) : 'N/A'}
           </div>
-          <div style={statLabelStyle}>Conv. Potenziale</div>
+          <div style={statLabelStyle}>Convenienza</div>
         </div>
         
-        <div style={statCards.blue}>
-          <div style={statValues.blue}>
-            {player['Fantamedia anno 2024-2025'] || 'N/A'}
+        <div style={statItemStyle}>
+          <div style={statValueStyle}>
+            {player.fantamedia ? player.fantamedia.toFixed(1) : 'N/A'}
           </div>
-          <div style={statLabelStyle}>Fantamedia 2024-25</div>
+          <div style={statLabelStyle}>Fantamedia</div>
         </div>
         
-        <div style={statCards.green}>
-          <div style={statValues.green}>
-            {player['Presenze campionato corrente'] || 'N/A'}
+        <div style={statItemStyle}>
+          <div style={statValueStyle}>
+            {player.presenze || 0}
           </div>
           <div style={statLabelStyle}>Presenze</div>
         </div>
         
-        <div style={statCards.yellow}>
-          <div style={statValues.yellow}>
-            {player.Punteggio || 'N/A'}
+        <div style={statItemStyle}>
+          <div style={statValueStyle}>
+            {player.punteggio ? player.punteggio.toFixed(1) : 'N/A'}
           </div>
           <div style={statLabelStyle}>Punteggio</div>
         </div>
       </div>
 
-      {fstats && (
-        <div style={advancedStatsStyle}>
-          <h4 style={advancedTitleStyle}>
-            <Award size={16} />
-            Statistiche Avanzate (FStats)
-          </h4>
-          <div style={advancedGridStyle}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>
-                {fstats.goals || 0}
-              </div>
-              <div style={statLabelStyle}>Gol</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>
-                {fstats.assists || 0}
-              </div>
-              <div style={statLabelStyle}>Assist</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>
-                {fstats.fanta_avg?.toFixed(2) || 'N/A'}
-              </div>
-              <div style={statLabelStyle}>Fanta Media</div>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', fontSize: '1.125rem' }}>
-                {fstats.mins_played || 0}
-              </div>
-              <div style={statLabelStyle}>Min. Giocati</div>
-            </div>
-          </div>
+      {/* Additional info se disponibile da FStats */}
+      {player.fstatsData && (
+        <div style={{
+          fontSize: '0.75rem',
+          color: '#6b7280',
+          textAlign: 'center',
+          marginBottom: '0.75rem',
+          padding: '0.5rem',
+          backgroundColor: '#f8fafc',
+          borderRadius: '6px'
+        }}>
+          📊 Dati FStats disponibili
         </div>
       )}
 
-      {parseSkills().length > 0 && (
-        <div style={skillsStyle}>
-          <h4 style={skillsTitleStyle}>🎯 Caratteristiche</h4>
-          <div style={skillsGridStyle}>
-            {parseSkills().map((skill, idx) => (
-              <span key={idx} style={skillBadgeStyle}>
-                {skill}
-              </span>
-            ))}
-          </div>
+      {/* Action buttons */}
+      {getStatusButtons()}
+      
+      {/* Timestamp acquisto */}
+      {currentStatus === 'acquired' && playerDetails?.timestamp && (
+        <div style={{
+          fontSize: '0.65rem',
+          color: '#9ca3af',
+          textAlign: 'center',
+          marginTop: '0.5rem'
+        }}>
+          Acquistato il {new Date(playerDetails.timestamp).toLocaleDateString('it-IT')}
         </div>
       )}
     </div>
