@@ -1,4 +1,4 @@
-// src/components/PlayerCard.js - Versione aggiornata con fantamilioni
+// src/components/PlayerCard.js - Fix per il problema di sovrapposizione badge
 import React from 'react';
 import { getPlayerDetails } from '../utils/storage';
 
@@ -6,7 +6,7 @@ const PlayerCard = ({
   player, 
   playerStatus, 
   onStatusChange,
-  onAcquire // Nuova prop per gestire l'acquisto con fantamilioni
+  onAcquire
 }) => {
   const playerDetails = getPlayerDetails(playerStatus, player.id);
   const currentStatus = playerDetails?.status || 'available';
@@ -14,10 +14,8 @@ const PlayerCard = ({
 
   const handleStatusChange = (newStatus) => {
     if (newStatus === 'acquired' && onAcquire) {
-      // Per l'acquisto, chiama la funzione speciale che aprirà la modal
       onAcquire(player);
     } else {
-      // Per altri status, usa la funzione normale
       onStatusChange(player.id, newStatus);
     }
   };
@@ -46,6 +44,15 @@ const PlayerCard = ({
     color: '#1f2937',
     margin: 0,
     lineHeight: '1.3'
+  };
+
+  // SOLUZIONE: Sposta il badge ruolo più a destra per fare spazio ai fantamilioni
+  const roleContainerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '0.5rem',
+    position: 'relative'
   };
 
   const roleStyle = {
@@ -115,18 +122,16 @@ const PlayerCard = ({
     gap: '0.25rem'
   };
 
-  // Fantamilioni display
+  // SOLUZIONE: Posiziona i fantamilioni sopra il badge ruolo
   const fantamilioniStyle = {
-    position: 'absolute',
-    top: '0.75rem',
-    right: '0.75rem',
-    backgroundColor: '#10b981',
-    color: 'white',
     fontSize: '0.75rem',
     fontWeight: '600',
     padding: '0.25rem 0.5rem',
     borderRadius: '12px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+    backgroundColor: '#10b981',
+    color: 'white',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    whiteSpace: 'nowrap'
   };
 
   // Status indicator
@@ -158,8 +163,59 @@ const PlayerCard = ({
     }
   }
 
-  function getStatusButtons() {
-    return (
+  // Modifica lo stile della card basato sullo status
+  const enhancedCardStyle = {
+    ...cardStyle,
+    borderColor: currentStatus === 'acquired' ? '#10b981' : 
+                currentStatus === 'unavailable' ? '#ef4444' : '#e5e7eb',
+    backgroundColor: currentStatus === 'acquired' ? '#f0fdf4' : 
+                    currentStatus === 'unavailable' ? '#fef2f2' : 'white'
+  };
+
+  return (
+    <div style={enhancedCardStyle}>
+      {/* Status indicator */}
+      <div style={statusIndicatorStyle} />
+      
+      {/* Header con nome, team e badge*/}
+      <div style={headerStyle}>
+        <div>
+          <h3 style={nameStyle}>{player.Nome}</h3>
+          <div style={teamStyle}>{player.Squadra}</div>
+        </div>
+        
+        {/* SOLUZIONE: Container per fantamilioni e ruolo in colonna */}
+        <div style={roleContainerStyle}>
+          {/* Fantamilioni badge (se presente) */}
+          {currentStatus === 'acquired' && fantamilioni && (
+            <div style={fantamilioniStyle}>
+              {fantamilioni} FM
+            </div>
+          )}
+          
+          {/* Badge ruolo */}
+          <div style={roleStyle}>{player.Ruolo}</div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={statsStyle}>
+        <div style={statItemStyle}>
+          <div style={statValueStyle}>
+            {player.convenienza ? player.convenienza.toFixed(1) : 'N/A'}
+          </div>
+          <div style={statLabelStyle}>Convenienza</div>
+        </div>
+        
+        <div style={statItemStyle}>
+          <div style={statValueStyle}>
+            {player.fantamedia ? player.fantamedia.toFixed(1) : 'N/A'}
+          </div>
+          <div style={statLabelStyle}>Fantamedia</div>
+        </div>
+      </div>
+
+      {/* Action buttons */}
       <div style={buttonContainerStyle}>
         <button
           onClick={() => handleStatusChange('acquired')}
@@ -225,99 +281,6 @@ const PlayerCard = ({
           </button>
         )}
       </div>
-    );
-  }
-
-  // Modifica lo stile della card basato sullo status
-  const enhancedCardStyle = {
-    ...cardStyle,
-    borderColor: currentStatus === 'acquired' ? '#10b981' : 
-                currentStatus === 'unavailable' ? '#ef4444' : '#e5e7eb',
-    backgroundColor: currentStatus === 'acquired' ? '#f0fdf4' : 
-                    currentStatus === 'unavailable' ? '#fef2f2' : 'white'
-  };
-
-  return (
-    <div style={enhancedCardStyle}>
-      {/* Status indicator */}
-      <div style={statusIndicatorStyle} />
-      
-      {/* Fantamilioni badge (solo se acquistato) */}
-      {currentStatus === 'acquired' && fantamilioni && (
-        <div style={fantamilioniStyle}>
-          {fantamilioni} FM
-        </div>
-      )}
-      
-      {/* Header */}
-      <div style={headerStyle}>
-        <div>
-          <h3 style={nameStyle}>{player.Nome}</h3>
-          <div style={teamStyle}>{player.Squadra}</div>
-        </div>
-        <div style={roleStyle}>{player.Ruolo}</div>
-      </div>
-
-      {/* Stats */}
-      <div style={statsStyle}>
-        <div style={statItemStyle}>
-          <div style={statValueStyle}>
-            {player.convenienza ? player.convenienza.toFixed(1) : 'N/A'}
-          </div>
-          <div style={statLabelStyle}>Convenienza</div>
-        </div>
-        
-        <div style={statItemStyle}>
-          <div style={statValueStyle}>
-            {player.fantamedia ? player.fantamedia.toFixed(1) : 'N/A'}
-          </div>
-          <div style={statLabelStyle}>Fantamedia</div>
-        </div>
-        
-        <div style={statItemStyle}>
-          <div style={statValueStyle}>
-            {player.presenze || 0}
-          </div>
-          <div style={statLabelStyle}>Presenze</div>
-        </div>
-        
-        <div style={statItemStyle}>
-          <div style={statValueStyle}>
-            {player.punteggio ? player.punteggio.toFixed(1) : 'N/A'}
-          </div>
-          <div style={statLabelStyle}>Punteggio</div>
-        </div>
-      </div>
-
-      {/* Additional info se disponibile da FStats */}
-      {player.fstatsData && (
-        <div style={{
-          fontSize: '0.75rem',
-          color: '#6b7280',
-          textAlign: 'center',
-          marginBottom: '0.75rem',
-          padding: '0.5rem',
-          backgroundColor: '#f8fafc',
-          borderRadius: '6px'
-        }}>
-          📊 Dati FStats disponibili
-        </div>
-      )}
-
-      {/* Action buttons */}
-      {getStatusButtons()}
-      
-      {/* Timestamp acquisto */}
-      {currentStatus === 'acquired' && playerDetails?.timestamp && (
-        <div style={{
-          fontSize: '0.65rem',
-          color: '#9ca3af',
-          textAlign: 'center',
-          marginTop: '0.5rem'
-        }}>
-          Acquistato il {new Date(playerDetails.timestamp).toLocaleDateString('it-IT')}
-        </div>
-      )}
     </div>
   );
 };
