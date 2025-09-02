@@ -1,5 +1,5 @@
-// src/components/PlayerCard.js - Fix per il problema di sovrapposizione badge
-import React from 'react';
+// src/components/PlayerCard.js - Enhanced version con evidenza infortuni e stats complete
+import React, { useState } from 'react';
 import { getPlayerDetails } from '../utils/storage';
 
 const PlayerCard = ({ 
@@ -8,9 +8,15 @@ const PlayerCard = ({
   onStatusChange,
   onAcquire
 }) => {
+  const [showAllStats, setShowAllStats] = useState(false);
   const playerDetails = getPlayerDetails(playerStatus, player.id);
   const currentStatus = playerDetails?.status || 'available';
   const fantamilioni = playerDetails?.fantamilioni || null;
+
+  // Controlla se il giocatore è infortunato
+  const isInjured = player.Infortunato === true || player.Injured === true || 
+                   player.Infortunato === 'Sì' || player.Injured === 'Yes' ||
+                   player.Infortunato === 'SI' || player.Injured === 'YES';
 
   const handleStatusChange = (newStatus) => {
     if (newStatus === 'acquired' && onAcquire) {
@@ -18,6 +24,12 @@ const PlayerCard = ({
     } else {
       onStatusChange(player.id, newStatus);
     }
+  };
+
+  const handleCardClick = (e) => {
+    // Evita il toggle se si clicca sui bottoni
+    if (e.target.tagName === 'BUTTON') return;
+    setShowAllStats(!showAllStats);
   };
 
   // Stili base
@@ -28,7 +40,14 @@ const PlayerCard = ({
     padding: '1rem',
     transition: 'all 0.2s',
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    cursor: 'pointer',
+    // Evidenzia visivamente se infortunato
+    ...(isInjured && {
+      backgroundColor: '#fef2f2',
+      borderColor: '#ef4444',
+      boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+    })
   };
 
   const headerStyle = {
@@ -46,7 +65,6 @@ const PlayerCard = ({
     lineHeight: '1.3'
   };
 
-  // SOLUZIONE: Sposta il badge ruolo più a destra per fare spazio ai fantamilioni
   const roleContainerStyle = {
     display: 'flex',
     flexDirection: 'column',
@@ -73,9 +91,28 @@ const PlayerCard = ({
     marginBottom: '0.75rem'
   };
 
+  // Badge infortunio con alta visibilità
+  const injuryBadgeStyle = {
+    position: 'absolute',
+    top: '0.5rem',
+    left: '0.5rem',
+    backgroundColor: '#ef4444',
+    color: 'white',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '6px',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    zIndex: 10,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+    animation: 'pulse 2s infinite'
+  };
+
   const statsStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
+    gridTemplateColumns: showAllStats ? 'repeat(auto-fit, minmax(120px, 1fr))' : 'repeat(2, 1fr)',
     gap: '0.5rem',
     marginBottom: '1rem'
   };
@@ -98,7 +135,8 @@ const PlayerCard = ({
   const statLabelStyle = {
     fontSize: '0.75rem',
     color: '#6b7280',
-    marginTop: '0.25rem'
+    marginTop: '0.25rem',
+    textAlign: 'center'
   };
 
   const buttonContainerStyle = {
@@ -122,7 +160,6 @@ const PlayerCard = ({
     gap: '0.25rem'
   };
 
-  // SOLUZIONE: Posiziona i fantamilioni sopra il badge ruolo
   const fantamilioniStyle = {
     fontSize: '0.75rem',
     fontWeight: '600',
@@ -134,7 +171,6 @@ const PlayerCard = ({
     whiteSpace: 'nowrap'
   };
 
-  // Status indicator
   const statusIndicatorStyle = {
     position: 'absolute',
     top: '-2px',
@@ -143,6 +179,22 @@ const PlayerCard = ({
     height: '4px',
     backgroundColor: getStatusColor(currentStatus),
     borderRadius: '12px 12px 0 0'
+  };
+
+  const expandIndicatorStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: '0.5rem',
+    gap: '0.5rem',
+    padding: '0.5rem',
+    backgroundColor: showAllStats ? '#f3f4f6' : 'transparent',
+    borderRadius: '6px',
+    fontSize: '0.875rem',
+    color: '#6b7280',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+    border: showAllStats ? '1px solid #e5e7eb' : '1px solid transparent',
   };
 
   function getRoleColor(ruolo) {
@@ -163,28 +215,58 @@ const PlayerCard = ({
     }
   }
 
+  // Statistiche base (sempre visibili)
+  const baseStats = [
+    { key: 'convenienza', label: 'Convenienza', value: player.convenienza?.toFixed(1) || 'N/A' },
+    { key: 'fantamedia', label: 'Fantamedia', value: player.fantamedia?.toFixed(1) || 'N/A' }
+  ];
+
+  // Statistiche complete (visibili quando espanse)
+  const allStats = [
+    ...baseStats,
+    { key: 'presenze', label: 'Presenze', value: player.presenze || player['Presenze campionato corrente'] || 'N/A' },
+    { key: 'punteggio', label: 'Punteggio', value: player.punteggio || player.Punteggio || 'N/A' },
+    { key: 'gol', label: 'Gol', value: player.Gol || 'N/A' },
+    { key: 'assist', label: 'Assist', value: player.Assist || 'N/A' },
+    { key: 'ammonizioni', label: 'Ammoniz.', value: player.Ammonizioni || 'N/A' },
+    { key: 'espulsioni', label: 'Espuls.', value: player.Espulsioni || 'N/A' },
+    { key: 'quotazione', label: 'Quotazione', value: player.Quotazione || 'N/A' },
+    { key: 'differenza', label: 'Diff. Quot.', value: player['Differenza quotazione'] || 'N/A' }
+  ];
+
+  const statsToShow = showAllStats ? allStats : baseStats;
+
   // Modifica lo stile della card basato sullo status
   const enhancedCardStyle = {
     ...cardStyle,
     borderColor: currentStatus === 'acquired' ? '#10b981' : 
-                currentStatus === 'unavailable' ? '#ef4444' : '#e5e7eb',
+                currentStatus === 'unavailable' ? '#ef4444' : 
+                isInjured ? '#ef4444' : '#e5e7eb',
     backgroundColor: currentStatus === 'acquired' ? '#f0fdf4' : 
-                    currentStatus === 'unavailable' ? '#fef2f2' : 'white'
+                    currentStatus === 'unavailable' ? '#fef2f2' :
+                    isInjured ? '#fef2f2' : 'white'
   };
 
   return (
-    <div style={enhancedCardStyle}>
+    <div style={enhancedCardStyle} onClick={handleCardClick}>
       {/* Status indicator */}
       <div style={statusIndicatorStyle} />
       
+      {/* Badge infortunio - MOLTO VISIBILE */}
+      {isInjured && (
+        <div style={injuryBadgeStyle}>
+          🤕 INFORTUNATO
+        </div>
+      )}
+      
       {/* Header con nome, team e badge*/}
       <div style={headerStyle}>
-        <div>
+        <div style={{ marginTop: isInjured ? '1.2rem' : '0' }}>
           <h3 style={nameStyle}>{player.Nome}</h3>
           <div style={teamStyle}>{player.Squadra}</div>
         </div>
         
-        {/* SOLUZIONE: Container per fantamilioni e ruolo in colonna */}
+        {/* Container per fantamilioni e ruolo in colonna */}
         <div style={roleContainerStyle}>
           {/* Fantamilioni badge (se presente) */}
           {currentStatus === 'acquired' && fantamilioni && (
@@ -198,21 +280,16 @@ const PlayerCard = ({
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats dinamiche */}
       <div style={statsStyle}>
-        <div style={statItemStyle}>
-          <div style={statValueStyle}>
-            {player.convenienza ? player.convenienza.toFixed(1) : 'N/A'}
+        {statsToShow.map((stat, index) => (
+          <div key={stat.key} style={statItemStyle}>
+            <div style={statValueStyle}>
+              {stat.value}
+            </div>
+            <div style={statLabelStyle}>{stat.label}</div>
           </div>
-          <div style={statLabelStyle}>Convenienza</div>
-        </div>
-        
-        <div style={statItemStyle}>
-          <div style={statValueStyle}>
-            {player.fantamedia ? player.fantamedia.toFixed(1) : 'N/A'}
-          </div>
-          <div style={statLabelStyle}>Fantamedia</div>
-        </div>
+        ))}
       </div>
 
       {/* Action buttons */}
@@ -281,6 +358,21 @@ const PlayerCard = ({
           </button>
         )}
       </div>
+
+      {/* Indicatore espansione - come elemento separato più elegante */}
+      <div style={expandIndicatorStyle}>
+        <span>{showAllStats ? '📊' : '📈'}</span>
+        <span>{showAllStats ? 'Nascondi dettagli' : 'Mostra tutti i dettagli'}</span>
+        <span style={{ fontSize: '0.75rem' }}>{showAllStats ? '▲' : '▼'}</span>
+      </div>
+
+      {/* Stile CSS per l'animazione pulse */}
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+      `}</style>
     </div>
   );
 };
