@@ -19,10 +19,10 @@ const RankingsTab = ({
   }, [data, selectedRole]);
 
   const roles = [
-    { key: 'ATT', label: 'Attaccanti', emoji: '⚽' },
-    { key: 'CEN', label: 'Centrocampisti', emoji: '🎯' },
+    { key: 'POR', label: 'Portieri', emoji: '🥅' },
     { key: 'DIF', label: 'Difensori', emoji: '🛡️' },
-    { key: 'POR', label: 'Portieri', emoji: '🥅' }
+    { key: 'CEN', label: 'Centrocampisti', emoji: '🎯' },    
+    { key: 'ATT', label: 'Attaccanti', emoji: '⚽' }
   ];
 
   const containerStyle = {
@@ -132,7 +132,8 @@ const RankingsTab = ({
     justifyContent: 'center',
     fontSize: '0.875rem',
     fontWeight: '700',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    zIndex: 100
   });
 
   function getRankColor(index) {
@@ -201,7 +202,7 @@ const RankingsTab = ({
           {topPlayers.map((player, index) => (
             <div key={player.id} style={{ position: 'relative' }}>
               {/* Rank badge - mostra solo per i primi 10 per evitare troppo rumore visivo */}
-              {index < 10 && (
+              {(
                 <div style={rankBadgeStyle(index)}>
                   {index + 1}
                 </div>

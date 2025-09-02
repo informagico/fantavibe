@@ -17,7 +17,7 @@ const App = () => {
   const [playerStatus, setPlayerStatus] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('search');
-  const [selectedRole, setSelectedRole] = useState('ATT');
+  const [selectedRole, setSelectedRole] = useState('POR');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 

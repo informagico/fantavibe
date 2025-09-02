@@ -95,7 +95,7 @@ const PlayerCard = ({
   const injuryBadgeStyle = {
     position: 'absolute',
     top: '0.5rem',
-    left: '0.5rem',
+    left: '1.5rem',
     backgroundColor: '#ef4444',
     color: 'white',
     padding: '0.25rem 0.5rem',
