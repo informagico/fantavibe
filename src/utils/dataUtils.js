@@ -1,3 +1,4 @@
+// src/utils/dataUtils.js - Versione aggiornata con original ranking
 
 /**
  * Cache per la normalizzazione dei nomi
@@ -73,14 +74,39 @@ const createSearchIndex = (players) => {
 };
 
 /**
- * Normalizza i dati da FPEDIA con ottimizzazioni
+ * Calcola il ranking originale per ruolo
+ */
+const calculateOriginalRankings = (players) => {
+  const roles = ['POR', 'DIF', 'CEN', 'ATT'];
+  const rankings = {};
+  
+  // Calcola ranking per ogni ruolo
+  roles.forEach(role => {
+    const rolePlayers = players.filter(p => p.Ruolo === role);
+    const sortedByConvenienza = sortPlayersByConvenienza(rolePlayers);
+    
+    // Assegna posizioni di ranking
+    sortedByConvenienza.forEach((player, index) => {
+      rankings[player.id] = {
+        role: role,
+        rank: index + 1,
+        totalInRole: rolePlayers.length
+      };
+    });
+  });
+  
+  return rankings;
+};
+
+/**
+ * Normalizza i dati da FPEDIA con ottimizzazioni e ranking originale
  */
 export const normalizePlayerData = (fpediaData) => {
   if (!fpediaData.length) return { players: [], searchIndex: new Map() };
   
-  console.time('🚀 Data normalization optimized');
+  console.time('🚀 Data normalization with rankings');
   
-  // Normalizza i dati
+  // Prima normalizzazione base
   const players = fpediaData.map(fpediaPlayer => {
     const normalizedName = normalizeName(fpediaPlayer.Nome);
     const playerId = fpediaPlayer.Nome 
@@ -99,13 +125,24 @@ export const normalizePlayerData = (fpediaData) => {
     };
   });
   
+  // Calcola ranking originali per ruolo
+  const originalRankings = calculateOriginalRankings(players);
+  
+  // Aggiunge ranking originale ai giocatori
+  const playersWithRanking = players.map(player => ({
+    ...player,
+    originalRank: originalRankings[player.id]?.rank || null,
+    totalInRole: originalRankings[player.id]?.totalInRole || 0
+  }));
+  
   // Crea indice di ricerca
-  const searchIndex = createSearchIndex(players);
+  const searchIndex = createSearchIndex(playersWithRanking);
   
-  console.timeEnd('🚀 Data normalization optimized');
-  console.log(`✅ Created index for ${players.length} players with ${searchIndex.size} search terms`);
+  console.timeEnd('🚀 Data normalization with rankings');
+  console.log(`✅ Created index for ${playersWithRanking.length} players with ${searchIndex.size} search terms`);
+  console.log('📊 Original rankings calculated for all roles');
   
-  return { players, searchIndex };
+  return { players: playersWithRanking, searchIndex };
 };
 
 /**
