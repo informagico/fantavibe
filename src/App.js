@@ -1,4 +1,4 @@
-// src/App.js - Versione aggiornata con sistema di tab
+// src/App.js - Versione corretta con inizializzazione fissata
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import BudgetDisplay from './components/BudgetDisplay';
@@ -15,33 +15,58 @@ const App = () => {
   const [playerStatus, setPlayerStatus] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('giocatori'); // Nuovo state per tab attiva
+  const [activeTab, setActiveTab] = useState('giocatori');
 
   // NUOVO: Stato del budget
   const [budget, setBudget] = useState(500);
+
+  // AGGIUNTO: Flag per evitare salvataggi durante l'inizializzazione
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Stati per la modal fantamilioni
   const [showFantamilioniModal, setShowFantamilioniModal] = useState(false);
   const [playerToAcquire, setPlayerToAcquire] = useState(null);
 
-  // Carica status giocatori all'avvio
+  // Carica status giocatori all'avvio - MODIFICATO
   useEffect(() => {
     const status = loadPlayerStatus();
     const savedBudget = loadBudget();
+    
+    console.log('Caricamento iniziale - Stato trovato:', Object.keys(status).length, 'giocatori');
+    console.log('Caricamento iniziale - Budget trovato:', savedBudget);
+    
     setPlayerStatus(status);
     setBudget(savedBudget);
+    
+    // Segna come inizializzato DOPO aver caricato i dati
+    setIsInitialized(true);
+    
     loadDataFromPublic();
   }, []);
 
-  // Salva automaticamente lo status dei giocatori
+  // Salva automaticamente lo status dei giocatori - MODIFICATO
   useEffect(() => {
+    // Non salvare durante l'inizializzazione
+    if (!isInitialized) {
+      console.log('Salvataggio saltato - app non ancora inizializzata');
+      return;
+    }
+    
+    console.log('Salvando stato giocatori:', Object.keys(playerStatus).length, 'giocatori');
     savePlayerStatus(playerStatus);
-  }, [playerStatus]);
+  }, [playerStatus, isInitialized]);
 
-  // NUOVO: Salva automaticamente il budget
+  // Salva automaticamente il budget - MODIFICATO  
   useEffect(() => {
+    // Non salvare durante l'inizializzazione
+    if (!isInitialized) {
+      console.log('Salvataggio budget saltato - app non ancora inizializzata');
+      return;
+    }
+    
+    console.log('Salvando budget:', budget);
     saveBudget(budget);
-  }, [budget]);
+  }, [budget, isInitialized]);
 
   // Caricamento automatico del file dalla cartella public
   const loadDataFromPublic = async () => {
@@ -79,6 +104,7 @@ const App = () => {
 
   // Gestione status giocatori
   const handlePlayerStatusChange = (playerId, status, fantamilioni = null) => {
+    console.log('Cambiamento stato giocatore:', playerId, status, fantamilioni);
     const newStatus = updatePlayerStatus(playerStatus, playerId, status, fantamilioni);
     setPlayerStatus(newStatus);
   };
@@ -91,12 +117,12 @@ const App = () => {
 
   const handleFantamilioniConfirm = (fantamilioni) => {
     if (playerToAcquire) {
-      // NUOVO: Controllo budget
+      // Controllo budget
       if (!canAffordPlayer(fantamilioni, budget, playerStatus)) {
-        alert(`Non hai abbastanza fantamilioni! Budget disponibile: ${budget - getTotalFantamilioni(playerStatus)}`);
+        alert(`Non hai abbastanza fantamilioni! Budget rimanente: ${budget - getTotalFantamilioni(playerStatus)} FM`);
         return;
       }
-
+      
       handlePlayerStatusChange(playerToAcquire.id, 'acquired', fantamilioni);
       setShowFantamilioniModal(false);
       setPlayerToAcquire(null);
@@ -108,39 +134,36 @@ const App = () => {
     setPlayerToAcquire(null);
   };
 
-  // NUOVO: Gestione cambio budget
-  const handleBudgetChange = (newBudget) => {
-    setBudget(newBudget);
-  };
-
-  // Definizione delle tab
+  // Resto del componente rimane uguale...
+  // (tutti gli stili e il JSX di render)
+  
   const tabs = [
-    {
-      id: 'giocatori',
-      label: 'Giocatori',
-      emoji: '🔍',
-      description: 'Cerca e acquista giocatori'
+    { 
+      id: 'giocatori', 
+      label: 'Giocatori', 
+      emoji: '👤',
+      description: 'Cerca e visualizza tutti i giocatori con statistiche e classifiche'
     },
-    {
-      id: 'rosa',
-      label: 'Rosa Acquistata',
-      emoji: '👥',
-      description: 'La tua rosa per ruolo'
+    { 
+      id: 'rosa', 
+      label: 'La Mia Rosa', 
+      emoji: '⭐',
+      description: 'Visualizza i giocatori che hai acquistato e gestisci il budget'
     }
   ];
 
-  // Stili
+  // Stili (mantieni quelli esistenti)
   const containerStyle = {
     minHeight: '100vh',
     backgroundColor: '#f8fafc'
   };
 
-  const tabNavigationStyle = {
-    backgroundColor: 'white',
-    borderBottom: '2px solid #e2e8f0',
-    padding: '0 2rem',
+  const tabsContainerStyle = {
     display: 'flex',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    padding: '0 1rem',
+    backgroundColor: 'white',
+    borderBottom: '1px solid #e2e8f0'
   };
 
   const tabButtonStyle = {
@@ -149,19 +172,21 @@ const App = () => {
     backgroundColor: 'transparent',
     cursor: 'pointer',
     fontSize: '1rem',
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#64748b',
-    borderBottom: '3px solid transparent',
-    transition: 'all 0.2s',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem'
+    gap: '0.5rem',
+    borderBottom: '3px solid transparent',
+    transition: 'all 0.2s ease',
+    position: 'relative'
   };
 
   const activeTabStyle = {
     ...tabButtonStyle,
-    color: '#3b82f6',
-    borderBottomColor: '#3b82f6'
+    color: '#1e293b',
+    borderBottomColor: '#3b82f6',
+    fontWeight: '600'
   };
 
   const tabContentStyle = {
@@ -176,9 +201,18 @@ const App = () => {
         playerStatus={playerStatus}
       />
 
-      {/* Tab Navigation - Solo se ci sono dati */}
+      {/* Budget Display */}
       {normalizedData.length > 0 && (
-        <div style={tabNavigationStyle}>
+        <BudgetDisplay 
+          budget={budget} 
+          onBudgetChange={setBudget}
+          playerStatus={playerStatus}
+        />
+      )}
+
+      {/* Navigation Tabs */}
+      {normalizedData.length > 0 && (
+        <div style={tabsContainerStyle}>
           {tabs.map(tab => (
             <button
               key={tab.id}
