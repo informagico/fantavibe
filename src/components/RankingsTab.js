@@ -76,34 +76,6 @@ const RankingsTab = ({
     border: '2px solid #e5e7eb'
   };
 
-  const statsStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem',
-    marginBottom: '2rem'
-  };
-
-  const statCardStyle = {
-    backgroundColor: 'white',
-    padding: '1.25rem',
-    borderRadius: '10px',
-    border: '2px solid #e5e7eb',
-    textAlign: 'center'
-  };
-
-  const statValueStyle = {
-    fontSize: '1.75rem',
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: '0.25rem'
-  };
-
-  const statLabelStyle = {
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    fontWeight: '500'
-  };
-
   const gridStyle = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',

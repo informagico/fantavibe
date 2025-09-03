@@ -4,7 +4,6 @@ import {
   clearPlayerStatus,
   exportPlayerStatus,
   getAcquiredPlayers,
-  getPlayerStatsByRole,
   getTotalFantamilioni
 } from '../utils/storage';
 
@@ -308,12 +307,6 @@ const Header = ({ dataCount, playerStatus }) => {
               fontSize: '0.75rem'
             }}>
               {['POR', 'DIF', 'CEN', 'ATT'].map(ruolo => {
-                const playersInRole = acquiredPlayers.filter(p => {
-                  // Qui dovresti avere accesso ai dati completi dei giocatori
-                  // Per ora mostriamo solo il conteggio
-                  return true; // Placeholder
-                });
-                
                 const roleCount = acquiredPlayers.length > 0 ? 
                   Math.floor(Math.random() * 3) : 0; // Placeholder
                 
