@@ -1,4 +1,4 @@
-// src/components/PlayerCard.js - Versione con modalità controllata esternamente
+// src/components/PlayerCard.js - Versione con conferma per reset
 import React from 'react';
 import { getPlayerDetails } from '../utils/storage';
 
@@ -28,7 +28,16 @@ const PlayerCard = ({
   const handleButtonClick = (e, action) => {
     e.stopPropagation();
     e.preventDefault();
-    handleStatusChange(action);
+    
+    // AGGIUNTO: Messaggio di conferma per il reset
+    if (action === 'available' && (currentStatus === 'acquired' || currentStatus === 'unavailable')) {
+      const statusText = currentStatus === 'acquired' ? 'acquistato' : 'non disponibile';
+      if (window.confirm(`Sei sicuro di voler resettare lo stato di ${player.Nome}? Il giocatore è attualmente ${statusText}.`)) {
+        handleStatusChange(action);
+      }
+    } else {
+      handleStatusChange(action);
+    }
   };
 
   function getRoleColor(ruolo) {
@@ -160,42 +169,54 @@ const PlayerCard = ({
 
   const statsStyle = {
     display: 'grid',
-    gridTemplateColumns: showAllStats ? 'repeat(auto-fit, minmax(120px, 1fr))' : 'repeat(2, 1fr)',
-    gap: '0.5rem',
-    marginBottom: '1rem'
+    gridTemplateColumns: showAllStats ? 'repeat(auto-fit, minmax(80px, 1fr))' : 'repeat(2, 1fr)',
+    gap: '0.75rem',
+    marginBottom: '1rem',
+    padding: '0.75rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '8px'
   };
 
   const statItemStyle = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '0.5rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '6px'
+    textAlign: 'center'
   };
 
   const statValueStyle = {
-    fontSize: '1rem',
+    fontSize: '0.875rem',
     fontWeight: '600',
-    color: '#1f2937'
+    color: '#1f2937',
+    marginBottom: '0.125rem'
   };
 
   const statLabelStyle = {
-    fontSize: '0.75rem',
+    fontSize: '0.625rem',
     color: '#6b7280',
-    marginTop: '0.25rem',
-    textAlign: 'center'
+    textTransform: 'uppercase',
+    fontWeight: '500',
+    lineHeight: '1'
+  };
+
+  const fantamilioniStyle = {
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    color: '#059669',
+    backgroundColor: '#dcfce7',
+    padding: '0.25rem 0.5rem',
+    borderRadius: '6px',
+    border: '1px solid #bbf7d0'
   };
 
   const buttonContainerStyle = {
     display: 'flex',
-    gap: '0.5rem',
-    marginTop: '1rem'
+    gap: '0.5rem'
   };
 
   const buttonStyle = {
     flex: 1,
-    padding: '0.5rem',
+    padding: '0.5rem 0.75rem',
     border: 'none',
     borderRadius: '6px',
     fontSize: '0.75rem',
@@ -208,42 +229,18 @@ const PlayerCard = ({
     gap: '0.25rem'
   };
 
-  const fantamilioniStyle = {
-    fontSize: '0.75rem',
-    fontWeight: '600',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '12px',
-    backgroundColor: '#10b981',
-    color: 'white',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    whiteSpace: 'nowrap'
-  };
-
-  const statusIndicatorStyle = {
-    position: 'absolute',
-    top: '-2px',
-    left: '-2px',
-    right: '-2px',
-    height: '4px',
-    backgroundColor: getStatusColor(currentStatus),
-    borderRadius: '12px 12px 0 0'
-  };
-
   return (
     <div style={enhancedCardStyle}>
-      {/* Status indicator */}
-      <div style={statusIndicatorStyle} />
-      
-      {/* Badge infortunio - MOLTO VISIBILE */}
+      {/* Badge infortunio - Solo se il giocatore è infortunato */}
       {isInjured && (
         <div style={injuryBadgeStyle}>
-          🤕 INFORTUNATO
+          🩹 INFORTUNATO
         </div>
       )}
       
-      {/* Header con nome, team e badge*/}
+      {/* Header con nome, squadra e ruolo */}
       <div style={headerStyle}>
-        <div style={{ marginTop: isInjured ? '1.2rem' : '0' }}>
+        <div style={{ flex: 1, paddingTop: isInjured ? '1.2rem' : '0' }}>
           <h3 style={nameStyle}>{player.Nome}</h3>
           <div style={teamStyle}>{player.Squadra}</div>
         </div>
