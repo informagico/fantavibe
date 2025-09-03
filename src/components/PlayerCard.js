@@ -297,7 +297,7 @@ const PlayerCard = ({
             }
           }}
         >
-          {currentStatus === 'acquired' ? '✓ Acquistato' : '+ Acquista'}
+          {currentStatus === 'acquired' ? '✓ Tuo' : '+ Compra'}
         </button>
         
         <button
@@ -319,7 +319,7 @@ const PlayerCard = ({
             }
           }}
         >
-          {currentStatus === 'unavailable' ? '✗ Non Disp.' : '✗ Non Disp.'}
+          {currentStatus === 'unavailable' ? '✗ N/D' : '✗ N/D'}
         </button>
         
         {(currentStatus === 'acquired' || currentStatus === 'unavailable') && (
