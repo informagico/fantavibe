@@ -1,7 +1,6 @@
-// src/App.js - Versione corretta con inizializzazione fissata
+// src/App.js - Versione senza BudgetDisplay con gestione budget nell'header
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
-import BudgetDisplay from './components/BudgetDisplay';
 import FantamilioniModal from './components/FantamilioniModal';
 import Header from './components/Header';
 import PlayersTab from './components/PlayersTab';
@@ -17,17 +16,17 @@ const App = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('giocatori');
 
-  // NUOVO: Stato del budget
+  // Stato del budget
   const [budget, setBudget] = useState(500);
 
-  // AGGIUNTO: Flag per evitare salvataggi durante l'inizializzazione
+  // Flag per evitare salvataggi durante l'inizializzazione
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Stati per la modal fantamilioni
   const [showFantamilioniModal, setShowFantamilioniModal] = useState(false);
   const [playerToAcquire, setPlayerToAcquire] = useState(null);
 
-  // Carica status giocatori all'avvio - MODIFICATO
+  // Carica status giocatori all'avvio
   useEffect(() => {
     const status = loadPlayerStatus();
     const savedBudget = loadBudget();
@@ -44,7 +43,7 @@ const App = () => {
     loadDataFromPublic();
   }, []);
 
-  // Salva automaticamente lo status dei giocatori - MODIFICATO
+  // Salva automaticamente lo status dei giocatori
   useEffect(() => {
     // Non salvare durante l'inizializzazione
     if (!isInitialized) {
@@ -56,7 +55,7 @@ const App = () => {
     savePlayerStatus(playerStatus);
   }, [playerStatus, isInitialized]);
 
-  // Salva automaticamente il budget - MODIFICATO  
+  // Salva automaticamente il budget
   useEffect(() => {
     // Non salvare durante l'inizializzazione
     if (!isInitialized) {
@@ -134,9 +133,7 @@ const App = () => {
     setPlayerToAcquire(null);
   };
 
-  // Resto del componente rimane uguale...
-  // (tutti gli stili e il JSX di render)
-  
+  // Tab configuration
   const tabs = [
     { 
       id: 'giocatori', 
@@ -152,7 +149,7 @@ const App = () => {
     }
   ];
 
-  // Stili (mantieni quelli esistenti)
+  // Stili
   const containerStyle = {
     minHeight: '100vh',
     backgroundColor: '#f8fafc'
@@ -195,22 +192,15 @@ const App = () => {
 
   return (
     <div style={containerStyle}>
-      {/* Header */}
+      {/* Header con Budget integrato */}
       <Header 
         dataCount={normalizedData.length}
         playerStatus={playerStatus}
+        budget={budget}
+        onBudgetChange={setBudget}
       />
 
-      {/* Budget Display */}
-      {normalizedData.length > 0 && (
-        <BudgetDisplay 
-          budget={budget} 
-          onBudgetChange={setBudget}
-          playerStatus={playerStatus}
-        />
-      )}
-
-      {/* Navigation Tabs */}
+      {/* Navigation Tabs - solo se ci sono dati */}
       {normalizedData.length > 0 && (
         <div style={tabsContainerStyle}>
           {tabs.map(tab => (
@@ -221,149 +211,104 @@ const App = () => {
               onMouseEnter={(e) => {
                 if (activeTab !== tab.id) {
                   e.target.style.color = '#374151';
+                  e.target.style.backgroundColor = '#f8fafc';
                 }
               }}
               onMouseLeave={(e) => {
                 if (activeTab !== tab.id) {
                   e.target.style.color = '#64748b';
+                  e.target.style.backgroundColor = 'transparent';
                 }
               }}
-              title={tab.description}
             >
-              <span>{tab.emoji}</span>
+              <span style={{ fontSize: '1.125rem' }}>{tab.emoji}</span>
               {tab.label}
             </button>
           ))}
         </div>
       )}
 
-      {/* Content */}
+      {/* Tab Content */}
       <div style={tabContentStyle}>
-        {/* Loading State */}
         {loading && (
           <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '4rem',
-            backgroundColor: '#f8fafc'
+            padding: '3rem',
+            textAlign: 'center',
+            fontSize: '1.125rem',
+            color: '#64748b'
           }}>
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '1rem'
-            }}>
-              <div style={{
-                width: '3rem',
-                height: '3rem',
-                border: '3px solid #e2e8f0',
-                borderTop: '3px solid #3b82f6',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} />
-              <p style={{ color: '#6b7280', fontWeight: '500' }}>
-                Caricamento dati in corso...
-              </p>
-            </div>
+            <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>⏳</div>
+            Caricamento dati in corso...
           </div>
         )}
 
-        {/* Error State */}
-        {!loading && error && (
+        {error && (
           <div style={{
-            textAlign: 'center',
             padding: '2rem',
+            margin: '2rem auto',
+            maxWidth: '600px',
             backgroundColor: '#fef2f2',
-            borderRadius: '8px',
             border: '1px solid #fecaca',
-            margin: '2rem',
-            maxWidth: '800px',
-            marginLeft: 'auto',
-            marginRight: 'auto'
+            borderRadius: '0.5rem',
+            color: '#dc2626',
+            textAlign: 'center'
           }}>
             <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
-            <p style={{ color: '#dc2626', fontWeight: '500', marginBottom: '1rem' }}>
-              {error}
-            </p>
+            <div style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+              Errore di caricamento
+            </div>
+            <div>{error}</div>
           </div>
         )}
 
-        {/* No Data State */}
         {!loading && !error && normalizedData.length === 0 && (
           <div style={{
+            padding: '3rem',
             textAlign: 'center',
-            padding: '4rem 2rem'
+            fontSize: '1.125rem',
+            color: '#64748b'
           }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-            <h2 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: '600', 
-              color: '#374151', 
-              marginBottom: '1rem' 
-            }}>
-              Carica i dati per iniziare
-            </h2>
-            <p style={{ 
-              color: '#6b7280', 
-              marginBottom: '2rem', 
-              lineHeight: '1.6' 
-            }}>
-              Carica il file Excel con i dati dei giocatori per iniziare<br />
-              ad esplorare statistiche, classifiche e gestire la tua rosa.
-            </p>
+            <div style={{ marginBottom: '1rem', fontSize: '3rem' }}>📊</div>
+            <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+              Benvenuto in Fantavibe!
+            </div>
+            <div>I dati dei giocatori verranno caricati automaticamente.</div>
           </div>
         )}
 
-        {/* Tab Content - Solo se ci sono dati */}
         {normalizedData.length > 0 && (
           <>
-            {/* Tab Giocatori */}
             {activeTab === 'giocatori' && (
               <PlayersTab
                 players={normalizedData}
-                searchIndex={searchIndex}
                 playerStatus={playerStatus}
                 onPlayerStatusChange={handlePlayerStatusChange}
                 onPlayerAcquire={handlePlayerAcquire}
-                budget={budget}
-                remainingBudget={budget - getTotalFantamilioni(playerStatus)}
+                searchIndex={searchIndex}
               />
             )}
 
-            {/* Tab Rosa Acquistata */}
             {activeTab === 'rosa' && (
               <RosaAcquistata
                 players={normalizedData}
                 playerStatus={playerStatus}
                 onPlayerStatusChange={handlePlayerStatusChange}
                 budget={budget}
-                remainingBudget={budget - getTotalFantamilioni(playerStatus)}
               />
             )}
           </>
         )}
       </div>
 
-      {/* Modal Fantamilioni */}
-      {showFantamilioniModal && (
+      {/* Modal per fantamilioni */}
+      {showFantamilioniModal && playerToAcquire && (
         <FantamilioniModal
           player={playerToAcquire}
           onConfirm={handleFantamilioniConfirm}
           onCancel={handleFantamilioniCancel}
-          maxFantamilioni={budget - getTotalFantamilioni(playerStatus)}
+          remainingBudget={budget - getTotalFantamilioni(playerStatus)}
         />
       )}
-
-      {/* CSS per l'animazione di loading */}
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}
-      </style>
     </div>
   );
 };

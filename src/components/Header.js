@@ -1,4 +1,4 @@
-// src/components/Header.js - Versione con budget integrato e meno invadente
+// src/components/Header.js - Versione con gestione budget integrata
 import React from 'react';
 import {
   clearPlayerStatus,
@@ -7,14 +7,11 @@ import {
   getTotalFantamilioni
 } from '../utils/storage';
 
-const Header = ({ dataCount = 0, playerStatus = {} }) => {
+const Header = ({ dataCount = 0, playerStatus = {}, budget = 500, onBudgetChange }) => {
   const totalFantamilioni = getTotalFantamilioni(playerStatus);
   const acquiredPlayers = getAcquiredPlayers(playerStatus);
   const totalAcquired = acquiredPlayers.length;
-  
-  // Budget predefinito (500 FM)
-  const budgetTotale = 500;
-  const budgetRimanente = budgetTotale - totalFantamilioni;
+  const budgetRimanente = budget - totalFantamilioni;
 
   // Calcola giocatori per status
   const unavailablePlayers = Object.values(playerStatus).filter(
@@ -43,6 +40,11 @@ const Header = ({ dataCount = 0, playerStatus = {} }) => {
       clearPlayerStatus();
       window.location.reload();
     }
+  };
+
+  const handleBudgetChange = (e) => {
+    const newBudget = Math.max(0, parseInt(e.target.value) || 0);
+    onBudgetChange(newBudget);
   };
 
   // Stili
@@ -80,28 +82,31 @@ const Header = ({ dataCount = 0, playerStatus = {} }) => {
     gap: '0.75rem'
   };
 
-  const budgetBarStyle = {
+  const budgetSectionStyle = {
     marginTop: '0.5rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
+    gap: '1rem',
+    fontSize: '0.875rem'
+  };
+
+  const budgetInputStyle = {
+    width: '80px',
+    padding: '0.25rem 0.5rem',
+    border: '1px solid #d1d5db',
+    borderRadius: '0.25rem',
     fontSize: '0.875rem',
-    color: '#64748b'
+    textAlign: 'center'
   };
 
-  const progressBarStyle = {
-    width: '120px',
-    height: '6px',
-    backgroundColor: '#e2e8f0',
-    borderRadius: '3px',
-    overflow: 'hidden'
-  };
-
-  const progressFillStyle = {
-    height: '100%',
-    backgroundColor: budgetRimanente >= 0 ? '#10b981' : '#ef4444',
-    width: `${Math.min(100, Math.max(0, (totalFantamilioni / budgetTotale) * 100))}%`,
-    transition: 'all 0.3s ease'
+  const budgetDisplayStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.25rem 0.75rem',
+    backgroundColor: budgetRimanente >= 0 ? '#f0fdf4' : '#fef2f2',
+    borderRadius: '0.375rem',
+    border: `1px solid ${budgetRimanente >= 0 ? '#bbf7d0' : '#fecaca'}`
   };
 
   const budgetTextStyle = {
@@ -175,23 +180,43 @@ const Header = ({ dataCount = 0, playerStatus = {} }) => {
         <div style={leftSectionStyle}>
           <h1 style={titleStyle}>
             ⚽ Fantavibe
+            {dataCount > 0 && (
+              <span style={{ 
+                fontSize: '0.875rem', 
+                fontWeight: 'normal', 
+                color: '#64748b',
+                backgroundColor: '#f1f5f9',
+                padding: '0.125rem 0.5rem',
+                borderRadius: '0.75rem'
+              }}>
+                {dataCount} giocatori
+              </span>
+            )}
           </h1>
           
-          {/* Budget integrato - solo se ci sono dati */}
+          {/* Gestione Budget integrata */}
           {dataCount > 0 && (
-            <div style={budgetBarStyle}>
-              <span>Budget:</span>
-              <div style={progressBarStyle}>
-                <div style={progressFillStyle}></div>
+            <div style={budgetSectionStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ color: '#64748b', fontWeight: '500' }}>Budget:</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={budget}
+                  onChange={handleBudgetChange}
+                  style={budgetInputStyle}
+                />
+                <span style={{ color: '#9ca3af' }}>FM</span>
               </div>
-              <span style={budgetTextStyle}>
-                {budgetRimanente}FM / {budgetTotale}FM
-              </span>
-              {dataCount > 0 && (
-                <span style={{ color: '#9ca3af', fontSize: '0.8rem' }}>
-                  • {dataCount} giocatori
+              
+              <div style={budgetDisplayStyle}>
+                <span style={budgetTextStyle}>
+                  {budgetRimanente}FM disponibili
                 </span>
-              )}
+                <span style={{ color: '#9ca3af' }}>
+                  ({totalFantamilioni}/{budget} FM)
+                </span>
+              </div>
             </div>
           )}
         </div>
@@ -201,40 +226,54 @@ const Header = ({ dataCount = 0, playerStatus = {} }) => {
           <div style={statsContainerStyle}>
             <div style={statStyle}>
               <div style={statValueStyle}>{totalAcquired}</div>
-              <div style={statLabelStyle}>Acquistati</div>
+              <div style={statLabelStyle}>Acquisiti</div>
+            </div>
+            
+            <div style={statStyle}>
+              <div style={statValueStyle}>{totalFantamilioni}</div>
+              <div style={statLabelStyle}>Spesi</div>
             </div>
             
             <div style={statStyle}>
               <div style={statValueStyle}>{unavailablePlayers}</div>
               <div style={statLabelStyle}>Non Disp.</div>
             </div>
-            
-            <div style={statStyle}>
-              <div style={{ ...statValueStyle, color: '#dc2626' }}>
-                {totalFantamilioni}FM
-              </div>
-              <div style={statLabelStyle}>Spesi</div>
-            </div>
           </div>
         )}
 
         {/* Azioni */}
         <div style={actionsStyle}>
-          <button 
-            onClick={handleExportData}
-            style={buttonStyle}
-            title="Esporta i dati per backup"
-          >
-            💾 Esporta
-          </button>
-          
-          <button 
-            onClick={handleClearAll}
-            style={clearButtonStyle}
-            title="Cancella tutti i dati salvati"
-          >
-            🗑️ Reset
-          </button>
+          {Object.keys(playerStatus).length > 0 && (
+            <>
+              <button 
+                onClick={handleExportData}
+                style={buttonStyle}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#f9fafb';
+                  e.target.style.borderColor = '#9ca3af';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'white';
+                  e.target.style.borderColor = '#d1d5db';
+                }}
+              >
+                📥 Esporta
+              </button>
+              
+              <button 
+                onClick={handleClearAll}
+                style={clearButtonStyle}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#b91c1c';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#dc2626';
+                }}
+              >
+                🗑️ Reset
+              </button>
+            </>
+          )}
         </div>
       </div>
     </header>
