@@ -176,17 +176,6 @@ const App = () => {
         playerStatus={playerStatus}
       />
 
-      {/* NUOVO: Display Budget - solo se ci sono dati */}
-      {normalizedData.length > 0 && (
-        <div style={{ padding: '0 2rem' }}>
-          <BudgetDisplay
-            budget={budget}
-            playerStatus={playerStatus}
-            onBudgetChange={handleBudgetChange}
-          />
-        </div>
-      )}
-
       {/* Tab Navigation - Solo se ci sono dati */}
       {normalizedData.length > 0 && (
         <div style={tabNavigationStyle}>
