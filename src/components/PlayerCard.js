@@ -34,11 +34,21 @@ const PlayerCard = ({
       console.log('Giocatore già acquistato, azione bloccata');
       return; // Blocca completamente l'azione
     }
+
+    if (action === 'unavailable' && currentStatus === 'unavailable') {
+      console.log('Giocatore già non disponibile, azione bloccata');
+      return; // Blocca completamente l'azione
+    }
     
     // AGGIUNTO: Messaggio di conferma per il reset
     if (action === 'available' && (currentStatus === 'acquired' || currentStatus === 'unavailable')) {
       const statusText = currentStatus === 'acquired' ? 'acquistato' : 'non disponibile';
       if (window.confirm(`Sei sicuro di voler resettare lo stato di ${player.Nome}? Il giocatore è attualmente ${statusText}.`)) {
+        handleStatusChange(action);
+      }
+    } else if (action === 'unavailable' && (currentStatus === 'acquired' || currentStatus === 'unavailable')) {
+      const statusText = currentStatus === 'acquired' ? 'acquistato' : 'non disponibile';
+      if (window.confirm(`Sei sicuro di voler rendere non disponibile lo stato di ${player.Nome}? Il giocatore è attualmente ${statusText}.`)) {
         handleStatusChange(action);
       }
     } else {
@@ -117,7 +127,8 @@ const PlayerCard = ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '0.75rem'
+    marginBottom: '0.75rem',
+    height: '4.5rem',
   };
 
   const nameStyle = {
