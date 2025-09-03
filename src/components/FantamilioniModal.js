@@ -1,51 +1,59 @@
-// src/components/FantamilioniModal.js - Versione corretta
-import { X } from 'lucide-react';
-import React, { useState } from 'react';
+// src/components/FantamilioniModal.js - Versione aggiornata con budget
+import React, { useEffect, useState } from 'react';
 
 const FantamilioniModal = ({ 
-  player,           // Cambiato da playerName a player
-  onConfirm,        // Manteniamo onConfirm come da App.js
-  onCancel          // Cambiato da onClose a onCancel come da App.js
+  player, 
+  onConfirm, 
+  onCancel,
+  maxFantamilioni = 500  // NUOVO: fantamilioni massimi disponibili nel budget
 }) => {
   const [fantamilioni, setFantamilioni] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  // Reset quando cambia il giocatore
+  useEffect(() => {
+    setFantamilioni('');
+    setError('');
+  }, [player]);
+
+  const handleConfirm = () => {
+    const value = parseInt(fantamilioni);
     
-    // Validazione
-    const value = parseFloat(fantamilioni);
-    if (!fantamilioni || isNaN(value) || value <= 0) {
-      setError('Inserisci un valore valido maggiore di 0');
+    if (!value || value <= 0) {
+      setError('Inserisci un valore valido');
       return;
     }
     
-    if (value > 999) {
-      setError('Il valore non può superare i 999 fantamilioni');
+    if (value > maxFantamilioni) {
+      setError(`Budget insufficiente! Disponibili: ${maxFantamilioni} FM`);
       return;
     }
     
-    // Conferma acquisto
     onConfirm(value);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleConfirm();
+    } else if (e.key === 'Escape') {
+      onCancel();
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setFantamilioni(value);
     
-    // Reset del form
-    setFantamilioni('');
-    setError('');
+    // Clear error quando l'utente inizia a digitare
+    if (error) {
+      setError('');
+    }
   };
 
-  const handleClose = () => {
-    setFantamilioni('');
-    setError('');
-    onCancel(); // Cambiato da onClose a onCancel
-  };
+  // Suggerimenti rapidi per i fantamilioni
+  const quickAmounts = [1, 5, 10, 20, 50].filter(amount => amount <= maxFantamilioni);
 
-  // Rimuoviamo il controllo isOpen perché in App.js la modal viene mostrata condizionalmente
-  // con {showFantamilioniModal && <FantamilioniModal ... />}
-  
-  // Ottieni il nome del giocatore dall'oggetto player
-  const playerName = player ? (player.Nome || player.name || 'Giocatore sconosciuto') : 'Giocatore sconosciuto';
-
-  const overlayStyle = {
+  const modalOverlayStyle = {
     position: 'fixed',
     top: 0,
     left: 0,
@@ -55,110 +63,108 @@ const FantamilioniModal = ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
-    padding: '1rem'
+    zIndex: 1000
   };
 
-  const modalStyle = {
+  const modalContentStyle = {
     backgroundColor: 'white',
     borderRadius: '12px',
-    padding: '1.5rem',
-    width: '100%',
-    maxWidth: '400px',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-    position: 'relative'
+    padding: '24px',
+    maxWidth: '420px',
+    width: '90%',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
   };
 
   const headerStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem',
-    paddingBottom: '1rem',
-    borderBottom: '1px solid #e5e7eb'
+    marginBottom: '20px'
   };
 
   const titleStyle = {
-    fontSize: '1.25rem',
+    margin: '0 0 8px 0',
+    fontSize: '20px',
     fontWeight: '600',
-    color: '#111827',
-    margin: 0
+    color: '#1f2937'
   };
 
-  const closeButtonStyle = {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#6b7280',
-    padding: '0.25rem',
-    borderRadius: '4px',
+  const subtitleStyle = {
+    margin: '0 0 4px 0',
+    fontSize: '14px',
+    color: '#6b7280'
+  };
+
+  const budgetInfoStyle = {
+    padding: '12px',
+    backgroundColor: maxFantamilioni > 0 ? '#f0fdf4' : '#fef2f2',
+    borderRadius: '8px',
+    border: `1px solid ${maxFantamilioni > 0 ? '#bbf7d0' : '#fecaca'}`,
+    marginBottom: '16px'
+  };
+
+  const budgetTextStyle = {
+    margin: 0,
+    fontSize: '14px',
+    color: maxFantamilioni > 0 ? '#059669' : '#dc2626',
+    fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center'
+    gap: '6px'
   };
 
-  const playerNameStyle = {
-    color: '#3b82f6',
-    fontWeight: '600',
-    marginBottom: '1rem',
-    padding: '0.75rem',
-    backgroundColor: '#eff6ff',
-    borderRadius: '8px',
-    textAlign: 'center'
-  };
-
-  const formStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  };
-
-  const labelStyle = {
-    fontSize: '0.875rem',
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: '0.5rem',
-    display: 'block'
+  const inputContainerStyle = {
+    marginBottom: '16px'
   };
 
   const inputStyle = {
     width: '100%',
-    padding: '0.75rem',
-    border: error ? '2px solid #ef4444' : '2px solid #e5e7eb',
+    padding: '12px',
+    border: `2px solid ${error ? '#f87171' : '#d1d5db'}`,
     borderRadius: '8px',
-    fontSize: '1rem',
+    fontSize: '16px',
     outline: 'none',
     transition: 'border-color 0.2s',
-    boxSizing: 'border-box'
+    fontWeight: '500'
   };
 
   const errorStyle = {
-    color: '#ef4444',
-    fontSize: '0.875rem',
-    marginTop: '0.25rem'
+    color: '#dc2626',
+    fontSize: '14px',
+    marginTop: '6px',
+    fontWeight: '500'
   };
 
-  const buttonContainerStyle = {
+  const quickButtonsStyle = {
     display: 'flex',
-    gap: '0.75rem',
-    marginTop: '0.5rem'
+    gap: '8px',
+    marginBottom: '20px',
+    flexWrap: 'wrap'
+  };
+
+  const quickButtonStyle = {
+    padding: '6px 12px',
+    backgroundColor: '#f3f4f6',
+    color: '#374151',
+    border: '1px solid #d1d5db',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    transition: 'all 0.2s'
+  };
+
+  const actionButtonsStyle = {
+    display: 'flex',
+    gap: '12px'
   };
 
   const buttonStyle = {
     flex: 1,
-    padding: '0.75rem 1rem',
+    padding: '12px',
     border: 'none',
     borderRadius: '8px',
-    fontSize: '0.875rem',
-    fontWeight: '500',
     cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '14px',
     transition: 'all 0.2s'
-  };
-
-  const confirmButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#22c55e',
-    color: 'white'
   };
 
   const cancelButtonStyle = {
@@ -167,67 +173,129 @@ const FantamilioniModal = ({
     color: '#374151'
   };
 
+  const confirmButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: fantamilioni && parseInt(fantamilioni) > 0 && parseInt(fantamilioni) <= maxFantamilioni 
+      ? '#10b981' 
+      : '#e5e7eb',
+    color: fantamilioni && parseInt(fantamilioni) > 0 && parseInt(fantamilioni) <= maxFantamilioni 
+      ? 'white' 
+      : '#9ca3af'
+  };
+
+  if (!player) return null;
+
   return (
-    <div style={overlayStyle} onClick={handleClose}>
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+    <div style={modalOverlayStyle} onClick={(e) => e.target === e.currentTarget && onCancel()}>
+      <div style={modalContentStyle}>
+        {/* Header */}
         <div style={headerStyle}>
-          <h3 style={titleStyle}>Acquista Giocatore</h3>
+          <h3 style={titleStyle}>
+            💰 Acquista {player.Nome}
+          </h3>
+          <p style={subtitleStyle}>
+            {player.Squadra} • {player.Ruolo}
+          </p>
+        </div>
+
+        {/* Informazioni Budget */}
+        <div style={budgetInfoStyle}>
+          <p style={budgetTextStyle}>
+            {maxFantamilioni > 0 ? '💚' : '❌'} 
+            Budget disponibile: <strong>{maxFantamilioni} fantamilioni</strong>
+          </p>
+        </div>
+
+        {/* Quick Amount Buttons */}
+        {quickAmounts.length > 0 && (
+          <div style={quickButtonsStyle}>
+            <span style={{ fontSize: '14px', color: '#6b7280', alignSelf: 'center', marginRight: '4px' }}>
+              Rapido:
+            </span>
+            {quickAmounts.map(amount => (
+              <button
+                key={amount}
+                onClick={() => setFantamilioni(amount.toString())}
+                style={{
+                  ...quickButtonStyle,
+                  backgroundColor: fantamilioni === amount.toString() ? '#3b82f6' : '#f3f4f6',
+                  color: fantamilioni === amount.toString() ? 'white' : '#374151',
+                  borderColor: fantamilioni === amount.toString() ? '#3b82f6' : '#d1d5db'
+                }}
+              >
+                {amount}
+              </button>
+            ))}
+            {maxFantamilioni >= 100 && (
+              <button
+                onClick={() => setFantamilioni(maxFantamilioni.toString())}
+                style={{
+                  ...quickButtonStyle,
+                  backgroundColor: fantamilioni === maxFantamilioni.toString() ? '#3b82f6' : '#f3f4f6',
+                  color: fantamilioni === maxFantamilioni.toString() ? 'white' : '#374151',
+                  borderColor: fantamilioni === maxFantamilioni.toString() ? '#3b82f6' : '#d1d5db'
+                }}
+              >
+                Max
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Input Field */}
+        <div style={inputContainerStyle}>
+          <input
+            type="number"
+            value={fantamilioni}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyPress}
+            placeholder="Inserisci fantamilioni"
+            min="1"
+            max={maxFantamilioni}
+            style={inputStyle}
+            autoFocus
+            disabled={maxFantamilioni <= 0}
+          />
+          {error && <div style={errorStyle}>{error}</div>}
+        </div>
+
+        {/* Action Buttons */}
+        <div style={actionButtonsStyle}>
           <button
-            onClick={handleClose}
-            style={closeButtonStyle}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+            onClick={onCancel}
+            style={cancelButtonStyle}
           >
-            <X size={20} />
+            ❌ Annulla
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!fantamilioni || parseInt(fantamilioni) <= 0 || parseInt(fantamilioni) > maxFantamilioni || maxFantamilioni <= 0}
+            style={confirmButtonStyle}
+          >
+            ✅ Conferma
           </button>
         </div>
 
-        <div style={playerNameStyle}>
-          {playerName}
-        </div>
-
-        <form onSubmit={handleSubmit} style={formStyle}>
-          <div>
-            <label style={labelStyle}>
-              A quanti fantamilioni lo hai acquistato?
-            </label>
-            <input
-              type="number"
-              step="1"
-              min="1"
-              max="999"
-              value={fantamilioni}
-              onChange={(e) => {
-                setFantamilioni(e.target.value);
-                setError('');
-              }}
-              placeholder="es. 25"
-              style={inputStyle}
-              autoFocus
-            />
-            {error && <div style={errorStyle}>{error}</div>}
+        {/* Warning per budget basso */}
+        {maxFantamilioni <= 0 && (
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            backgroundColor: '#fef2f2',
+            borderRadius: '8px',
+            border: '1px solid #fecaca'
+          }}>
+            <p style={{
+              margin: 0,
+              fontSize: '14px',
+              color: '#dc2626',
+              textAlign: 'center',
+              fontWeight: '500'
+            }}>
+              ⚠️ Budget esaurito! Non puoi acquistare altri giocatori.
+            </p>
           </div>
-          
-          <div style={buttonContainerStyle}>
-            <button
-              type="button"
-              onClick={handleClose}
-              style={cancelButtonStyle}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#e5e7eb'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-            >
-              Annulla
-            </button>
-            <button
-              type="submit"
-              style={confirmButtonStyle}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#16a34a'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#22c55e'}
-            >
-              Conferma Acquisto
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
-// src/utils/storage.js - Versione aggiornata con gestione sicura
+// src/utils/storage.js - Versione completa con tutte le funzioni
 
 const STORAGE_KEY = 'fantacalcio_player_status';
+const BUDGET_STORAGE_KEY = 'fantacalcio_budget'; // AGGIUNTO
 
 /**
  * Struttura dei dati salvati:
@@ -159,12 +160,88 @@ export const getPlayerStatsByRole = (playerStatus, playersData) => {
   return stats;
 };
 
+// ============== NUOVE FUNZIONI BUDGET ==============
+
+/**
+ * Carica il budget dal localStorage
+ * @returns {number} Budget salvato o 500 di default
+ */
+export const loadBudget = () => {
+  try {
+    const saved = localStorage.getItem(BUDGET_STORAGE_KEY);
+    return saved ? parseInt(saved) : 500;
+  } catch (error) {
+    console.warn('Errore nel caricamento del budget:', error);
+    return 500;
+  }
+};
+
+/**
+ * Salva il budget nel localStorage
+ * @param {number} budget - Budget da salvare
+ */
+export const saveBudget = (budget) => {
+  try {
+    localStorage.setItem(BUDGET_STORAGE_KEY, budget.toString());
+    console.log('Budget salvato:', budget);
+  } catch (error) {
+    console.error('Errore nel salvataggio del budget:', error);
+  }
+};
+
+/**
+ * Calcola il budget rimanente
+ * @param {number} totalBudget - Budget totale
+ * @param {Object} playerStatus - Stato dei giocatori
+ * @returns {number} Budget rimanente
+ */
+export const calculateRemainingBudget = (totalBudget, playerStatus) => {
+  const totalSpent = getTotalFantamilioni(playerStatus);
+  return totalBudget - totalSpent;
+};
+
+/**
+ * Verifica se un acquisto è possibile
+ * @param {number} fantamilioniToSpend - Fantamilioni da spendere
+ * @param {number} totalBudget - Budget totale
+ * @param {Object} playerStatus - Stato dei giocatori
+ * @returns {boolean} True se l'acquisto è possibile
+ */
+export const canAffordPlayer = (fantamilioniToSpend, totalBudget, playerStatus) => {
+  const remainingBudget = calculateRemainingBudget(totalBudget, playerStatus);
+  return fantamilioniToSpend <= remainingBudget;
+};
+
+/**
+ * Ottiene statistiche complete del budget
+ * @param {number} totalBudget - Budget totale
+ * @param {Object} playerStatus - Stato dei giocatori
+ * @returns {Object} Statistiche complete
+ */
+export const getBudgetStats = (totalBudget, playerStatus) => {
+  const totalSpent = getTotalFantamilioni(playerStatus);
+  const remainingBudget = totalBudget - totalSpent;
+  const acquiredPlayers = getAcquiredPlayers(playerStatus);
+  
+  return {
+    totalBudget,
+    totalSpent,
+    remainingBudget,
+    playersCount: acquiredPlayers.length,
+    averageSpentPerPlayer: acquiredPlayers.length > 0 ? Math.round(totalSpent / acquiredPlayers.length) : 0,
+    budgetUtilization: totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0
+  };
+};
+
+// ============== FUNZIONI ESISTENTI ==============
+
 /**
  * Cancella tutti i dati salvati
  */
 export const clearPlayerStatus = () => {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(BUDGET_STORAGE_KEY); // AGGIUNTO
     console.log('Tutti i dati sono stati cancellati');
   } catch (error) {
     console.error('Errore nella cancellazione dei dati:', error);
@@ -175,20 +252,24 @@ export const clearPlayerStatus = () => {
  * Esporta i dati in formato JSON per backup
  * @param {Object} playerStatus - Oggetto con gli stati dei giocatori
  * @param {Array} playersData - Dati completi dei giocatori (opzionale per nomi leggibili)
+ * @param {number} budget - Budget attuale (opzionale)
  * @returns {string} JSON string dei dati
  */
-export const exportPlayerStatus = (playerStatus, playersData = []) => {
+export const exportPlayerStatus = (playerStatus, playersData = [], budget = null) => {
   // Gestione sicura dell'oggetto undefined
   const safePlayerStatus = playerStatus || {};
   
   const exportData = {
-    version: '2.0', // Aggiornato per nuova struttura con fantamilioni
+    version: '2.1', // AGGIORNATO per includere budget
     timestamp: new Date().toISOString(),
     data: safePlayerStatus,
+    budget: budget || loadBudget(), // AGGIUNTO
     summary: {
       totalPlayers: Object.keys(safePlayerStatus).length,
       acquiredPlayers: getAcquiredPlayers(safePlayerStatus).length,
-      totalFantamilioni: getTotalFantamilioni(safePlayerStatus)
+      totalFantamilioni: getTotalFantamilioni(safePlayerStatus),
+      budget: budget || loadBudget(),
+      remainingBudget: (budget || loadBudget()) - getTotalFantamilioni(safePlayerStatus)
     }
   };
   
@@ -229,8 +310,22 @@ export const importPlayerStatus = (jsonString) => {
       }
     }
     
+    // Importa anche il budget se presente
+    const result = {
+      playerStatus: importData.data
+    };
+    
+    if (importData.budget && typeof importData.budget === 'number') {
+      result.budget = importData.budget;
+      saveBudget(importData.budget); // Salva automaticamente
+    }
+    
     console.log(`Importazione completata: ${Object.keys(importData.data).length} giocatori`);
-    return importData.data;
+    if (result.budget) {
+      console.log(`Budget importato: ${result.budget} fantamilioni`);
+    }
+    
+    return result;
   } catch (error) {
     console.error('Errore nell\'importazione dei dati:', error);
     return null;

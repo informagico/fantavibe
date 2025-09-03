@@ -1,12 +1,13 @@
 // src/App.js - Versione aggiornata con sistema di tab
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
+import BudgetDisplay from './components/BudgetDisplay';
 import FantamilioniModal from './components/FantamilioniModal';
 import Header from './components/Header';
 import PlayersTab from './components/PlayersTab';
 import RosaAcquistata from './components/RosaAcquistata';
 import { normalizePlayerData } from './utils/dataUtils';
-import { loadPlayerStatus, savePlayerStatus, updatePlayerStatus } from './utils/storage';
+import { canAffordPlayer, getTotalFantamilioni, loadBudget, loadPlayerStatus, saveBudget, savePlayerStatus, updatePlayerStatus } from './utils/storage';
 
 const App = () => {
   // Stati principali
@@ -16,6 +17,9 @@ const App = () => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('giocatori'); // Nuovo state per tab attiva
 
+  // NUOVO: Stato del budget
+  const [budget, setBudget] = useState(500);
+
   // Stati per la modal fantamilioni
   const [showFantamilioniModal, setShowFantamilioniModal] = useState(false);
   const [playerToAcquire, setPlayerToAcquire] = useState(null);
@@ -23,7 +27,9 @@ const App = () => {
   // Carica status giocatori all'avvio
   useEffect(() => {
     const status = loadPlayerStatus();
+    const savedBudget = loadBudget();
     setPlayerStatus(status);
+    setBudget(savedBudget);
     loadDataFromPublic();
   }, []);
 
@@ -31,6 +37,11 @@ const App = () => {
   useEffect(() => {
     savePlayerStatus(playerStatus);
   }, [playerStatus]);
+
+  // NUOVO: Salva automaticamente il budget
+  useEffect(() => {
+    saveBudget(budget);
+  }, [budget]);
 
   // Caricamento automatico del file dalla cartella public
   const loadDataFromPublic = async () => {
@@ -80,6 +91,12 @@ const App = () => {
 
   const handleFantamilioniConfirm = (fantamilioni) => {
     if (playerToAcquire) {
+      // NUOVO: Controllo budget
+      if (!canAffordPlayer(fantamilioni, budget, playerStatus)) {
+        alert(`Non hai abbastanza fantamilioni! Budget disponibile: ${budget - getTotalFantamilioni(playerStatus)}`);
+        return;
+      }
+
       handlePlayerStatusChange(playerToAcquire.id, 'acquired', fantamilioni);
       setShowFantamilioniModal(false);
       setPlayerToAcquire(null);
@@ -89,6 +106,11 @@ const App = () => {
   const handleFantamilioniCancel = () => {
     setShowFantamilioniModal(false);
     setPlayerToAcquire(null);
+  };
+
+  // NUOVO: Gestione cambio budget
+  const handleBudgetChange = (newBudget) => {
+    setBudget(newBudget);
   };
 
   // Definizione delle tab
@@ -153,6 +175,17 @@ const App = () => {
         dataCount={normalizedData.length}
         playerStatus={playerStatus}
       />
+
+      {/* NUOVO: Display Budget - solo se ci sono dati */}
+      {normalizedData.length > 0 && (
+        <div style={{ padding: '0 2rem' }}>
+          <BudgetDisplay
+            budget={budget}
+            playerStatus={playerStatus}
+            onBudgetChange={handleBudgetChange}
+          />
+        </div>
+      )}
 
       {/* Tab Navigation - Solo se ci sono dati */}
       {normalizedData.length > 0 && (
@@ -270,6 +303,8 @@ const App = () => {
                 playerStatus={playerStatus}
                 onPlayerStatusChange={handlePlayerStatusChange}
                 onPlayerAcquire={handlePlayerAcquire}
+                budget={budget}
+                remainingBudget={budget - getTotalFantamilioni(playerStatus)}
               />
             )}
 
@@ -279,6 +314,8 @@ const App = () => {
                 players={normalizedData}
                 playerStatus={playerStatus}
                 onPlayerStatusChange={handlePlayerStatusChange}
+                budget={budget}
+                remainingBudget={budget - getTotalFantamilioni(playerStatus)}
               />
             )}
           </>
@@ -291,6 +328,7 @@ const App = () => {
           player={playerToAcquire}
           onConfirm={handleFantamilioniConfirm}
           onCancel={handleFantamilioniCancel}
+          maxFantamilioni={budget - getTotalFantamilioni(playerStatus)}
         />
       )}
 
