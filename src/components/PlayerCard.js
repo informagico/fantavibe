@@ -1,14 +1,14 @@
-// src/components/PlayerCard.js - Enhanced version con evidenza infortuni e stats complete
-import React, { useState } from 'react';
+// src/components/PlayerCard.js - Versione con modalità controllata esternamente
+import React from 'react';
 import { getPlayerDetails } from '../utils/storage';
 
 const PlayerCard = ({ 
   player, 
   playerStatus, 
   onStatusChange,
-  onAcquire
+  onAcquire,
+  showAllStats = false // PROP CONTROLLATO ESTERNAMENTE
 }) => {
-  const [showAllStats, setShowAllStats] = useState(false);
   const playerDetails = getPlayerDetails(playerStatus, player.id);
   const currentStatus = playerDetails?.status || 'available';
   const fantamilioni = playerDetails?.fantamilioni || null;
@@ -26,11 +26,51 @@ const PlayerCard = ({
     }
   };
 
-  const handleCardClick = (e) => {
-    // Evita il toggle se si clicca sui bottoni
-    if (e.target.tagName === 'BUTTON') return;
-    setShowAllStats(!showAllStats);
+  // GESTIONE BOTTONI - previene eventi indesiderati
+  const handleButtonClick = (e, action) => {
+    e.stopPropagation();
+    e.preventDefault();
+    handleStatusChange(action);
   };
+
+  function getRoleColor(ruolo) {
+    switch (ruolo) {
+      case 'POR': return '#8b5cf6';
+      case 'DIF': return '#06b6d4';
+      case 'CEN': return '#10b981';
+      case 'ATT': return '#f59e0b';
+      default: return '#6b7280';
+    }
+  }
+
+  function getStatusColor(status) {
+    switch (status) {
+      case 'acquired': return '#10b981';
+      case 'unavailable': return '#ef4444';
+      default: return 'transparent';
+    }
+  }
+
+  // Statistiche base (sempre visibili)
+  const baseStats = [
+    { key: 'convenienza', label: 'Convenienza', value: player.convenienza?.toFixed(1) || 'N/A' },
+    { key: 'fantamedia', label: 'Fantamedia', value: player.fantamedia?.toFixed(2) || 'N/A' }
+  ];
+
+  // Statistiche complete (visibili quando showAllStats è true)
+  const allStats = [
+    ...baseStats,
+    { key: 'presenze', label: 'Presenze', value: player.presenze || player['Presenze campionato corrente'] || 'N/A' },
+    { key: 'punteggio', label: 'Punteggio', value: player.punteggio || player.Punteggio || 'N/A' },
+    { key: 'gol', label: 'Gol', value: player.Gol || 'N/A' },
+    { key: 'assist', label: 'Assist', value: player.Assist || 'N/A' },
+    { key: 'ammonizioni', label: 'Ammoniz.', value: player.Ammonizioni || 'N/A' },
+    { key: 'espulsioni', label: 'Espuls.', value: player.Espulsioni || 'N/A' },
+    { key: 'quotazione', label: 'Quotazione', value: player.Quotazione || 'N/A' },
+    { key: 'differenza', label: 'Diff. Quot.', value: player['Differenza quotazione'] || 'N/A' }
+  ];
+
+  const statsToShow = showAllStats ? allStats : baseStats;
 
   // Stili base
   const cardStyle = {
@@ -41,13 +81,23 @@ const PlayerCard = ({
     transition: 'all 0.2s',
     position: 'relative',
     overflow: 'hidden',
-    cursor: 'pointer',
-    // Evidenzia visivamente se infortunato
+    // Rimuoviamo il cursor pointer dato che non è più clickabile
     ...(isInjured && {
       backgroundColor: '#fef2f2',
       borderColor: '#ef4444',
       boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
     })
+  };
+
+  // Modifica lo stile della card basato sullo status
+  const enhancedCardStyle = {
+    ...cardStyle,
+    borderColor: currentStatus === 'acquired' ? '#10b981' : 
+                currentStatus === 'unavailable' ? '#ef4444' : 
+                isInjured ? '#ef4444' : '#e5e7eb',
+    backgroundColor: currentStatus === 'acquired' ? '#f0fdf4' : 
+                    currentStatus === 'unavailable' ? '#fef2f2' :
+                    isInjured ? '#fef2f2' : 'white'
   };
 
   const headerStyle = {
@@ -181,74 +231,8 @@ const PlayerCard = ({
     borderRadius: '12px 12px 0 0'
   };
 
-  const expandIndicatorStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: '0.5rem',
-    gap: '0.5rem',
-    padding: '0.5rem',
-    backgroundColor: showAllStats ? '#f3f4f6' : 'transparent',
-    borderRadius: '6px',
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    fontWeight: '500',
-    transition: 'all 0.2s',
-    border: showAllStats ? '1px solid #e5e7eb' : '1px solid transparent',
-  };
-
-  function getRoleColor(ruolo) {
-    switch (ruolo) {
-      case 'POR': return '#8b5cf6';
-      case 'DIF': return '#06b6d4';
-      case 'CEN': return '#10b981';
-      case 'ATT': return '#f59e0b';
-      default: return '#6b7280';
-    }
-  }
-
-  function getStatusColor(status) {
-    switch (status) {
-      case 'acquired': return '#10b981';
-      case 'unavailable': return '#ef4444';
-      default: return 'transparent';
-    }
-  }
-
-  // Statistiche base (sempre visibili)
-  const baseStats = [
-    { key: 'convenienza', label: 'Convenienza', value: player.convenienza?.toFixed(1) || 'N/A' },
-    { key: 'fantamedia', label: 'Fantamedia', value: player.fantamedia?.toFixed(2) || 'N/A' }
-  ];
-
-  // Statistiche complete (visibili quando espanse)
-  const allStats = [
-    ...baseStats,
-    { key: 'presenze', label: 'Presenze', value: player.presenze || player['Presenze campionato corrente'] || 'N/A' },
-    { key: 'punteggio', label: 'Punteggio', value: player.punteggio || player.Punteggio || 'N/A' },
-    { key: 'gol', label: 'Gol', value: player.Gol || 'N/A' },
-    { key: 'assist', label: 'Assist', value: player.Assist || 'N/A' },
-    { key: 'ammonizioni', label: 'Ammoniz.', value: player.Ammonizioni || 'N/A' },
-    { key: 'espulsioni', label: 'Espuls.', value: player.Espulsioni || 'N/A' },
-    { key: 'quotazione', label: 'Quotazione', value: player.Quotazione || 'N/A' },
-    { key: 'differenza', label: 'Diff. Quot.', value: player['Differenza quotazione'] || 'N/A' }
-  ];
-
-  const statsToShow = showAllStats ? allStats : baseStats;
-
-  // Modifica lo stile della card basato sullo status
-  const enhancedCardStyle = {
-    ...cardStyle,
-    borderColor: currentStatus === 'acquired' ? '#10b981' : 
-                currentStatus === 'unavailable' ? '#ef4444' : 
-                isInjured ? '#ef4444' : '#e5e7eb',
-    backgroundColor: currentStatus === 'acquired' ? '#f0fdf4' : 
-                    currentStatus === 'unavailable' ? '#fef2f2' :
-                    isInjured ? '#fef2f2' : 'white'
-  };
-
   return (
-    <div style={enhancedCardStyle} onClick={handleCardClick}>
+    <div style={enhancedCardStyle}>
       {/* Status indicator */}
       <div style={statusIndicatorStyle} />
       
@@ -280,7 +264,7 @@ const PlayerCard = ({
         </div>
       </div>
 
-      {/* Stats dinamiche */}
+      {/* Stats dinamiche - CONTROLLATE ESTERNAMENTE */}
       <div style={statsStyle}>
         {statsToShow.map((stat, index) => (
           <div key={stat.key} style={statItemStyle}>
@@ -295,7 +279,7 @@ const PlayerCard = ({
       {/* Action buttons */}
       <div style={buttonContainerStyle}>
         <button
-          onClick={() => handleStatusChange('acquired')}
+          onClick={(e) => handleButtonClick(e, 'acquired')}
           style={{
             ...buttonStyle,
             backgroundColor: currentStatus === 'acquired' ? '#10b981' : '#f0fdf4',
@@ -317,7 +301,7 @@ const PlayerCard = ({
         </button>
         
         <button
-          onClick={() => handleStatusChange('unavailable')}
+          onClick={(e) => handleButtonClick(e, 'unavailable')}
           style={{
             ...buttonStyle,
             backgroundColor: currentStatus === 'unavailable' ? '#ef4444' : '#fef2f2',
@@ -340,7 +324,7 @@ const PlayerCard = ({
         
         {(currentStatus === 'acquired' || currentStatus === 'unavailable') && (
           <button
-            onClick={() => handleStatusChange('available')}
+            onClick={(e) => handleButtonClick(e, 'available')}
             style={{
               ...buttonStyle,
               backgroundColor: '#f8fafc',
@@ -357,13 +341,6 @@ const PlayerCard = ({
             ↺ Reset
           </button>
         )}
-      </div>
-
-      {/* Indicatore espansione - come elemento separato più elegante */}
-      <div style={expandIndicatorStyle}>
-        <span>{showAllStats ? '📊' : '📈'}</span>
-        <span>{showAllStats ? 'Nascondi dettagli' : 'Mostra tutti i dettagli'}</span>
-        <span style={{ fontSize: '0.75rem' }}>{showAllStats ? '▲' : '▼'}</span>
       </div>
 
       {/* Stile CSS per l'animazione pulse */}

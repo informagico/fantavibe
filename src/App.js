@@ -127,43 +127,7 @@ const App = () => {
   const containerStyle = {
     minHeight: '100vh',
     backgroundColor: '#f8fafc',
-    fontFamily: 'system-ui, -apple-system, sans-serif'
-  };
-
-  const headerStyle = {
-    backgroundColor: 'white',
-    borderBottom: '1px solid #e5e7eb',
-    padding: '1rem 0'
-  };
-
-  const tabsStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '2rem',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0 1rem'
-  };
-
-  const tabStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.75rem 1.5rem',
-    border: 'none',
-    backgroundColor: 'transparent',
-    color: '#6b7280',
-    cursor: 'pointer',
-    borderRadius: '0.5rem',
-    fontSize: '1rem',
-    fontWeight: '500',
-    transition: 'all 0.2s'
-  };
-
-  const activeTabStyle = {
-    ...tabStyle,
-    backgroundColor: '#3b82f6',
-    color: 'white'
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   };
 
   const contentStyle = {
@@ -172,34 +136,52 @@ const App = () => {
     padding: '2rem 1rem'
   };
 
+  const tabsStyle = {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '2rem',
+    padding: '0.25rem',
+    backgroundColor: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    border: '1px solid #e5e7eb'
+  };
+
+  const tabStyle = {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.5rem',
+    background: 'none',
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    color: '#6b7280',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    textAlign: 'center'
+  };
+
+  const activeTabStyle = {
+    ...tabStyle,
+    backgroundColor: '#3b82f6',
+    color: 'white',
+    fontWeight: '600',
+    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+  };
+
   return (
     <div style={containerStyle}>
+      {/* Header */}
       <Header 
-        dataCount={fpediaData.length}
+        dataCount={normalizedData.length}
         playerStatus={playerStatus}
       />
-      
-      {/* Navigation Tabs */}
-      <div style={headerStyle}>
-        <div style={tabsStyle}>
-          <button
-            style={activeTab === 'search' ? activeTabStyle : tabStyle}
-            onClick={() => setActiveTab('search')}
-          >
-            <Search size={18} />
-            Cerca Giocatori
-          </button>
-          <button
-            style={activeTab === 'rankings' ? activeTabStyle : tabStyle}
-            onClick={() => setActiveTab('rankings')}
-          >
-            <Users size={18} />
-            Classifiche
-          </button>
-        </div>
-      </div>
 
-      {/* Content */}
+      {/* Main Content */}
       <div style={contentStyle}>
         {/* Loading State */}
         {loading && (
@@ -229,10 +211,32 @@ const App = () => {
           </div>
         )}
 
-        {/* File Upload */}
-        <FileUpload onFileUpload={handleFileUpload} />
+        {/* File Upload - SOLO se non ci sono dati caricati */}
+        {normalizedData.length === 0 && !loading && (
+          <FileUpload onFileUpload={handleFileUpload} />
+        )}
 
-        {/* Data Display */}
+        {/* Navigation Tabs - SOLO se ci sono dati */}
+        {normalizedData.length > 0 && (
+          <div style={tabsStyle}>
+            <button
+              style={activeTab === 'search' ? activeTabStyle : tabStyle}
+              onClick={() => setActiveTab('search')}
+            >
+              <Search size={18} />
+              Cerca Giocatori
+            </button>
+            <button
+              style={activeTab === 'rankings' ? activeTabStyle : tabStyle}
+              onClick={() => setActiveTab('rankings')}
+            >
+              <Users size={18} />
+              Classifiche
+            </button>
+          </div>
+        )}
+
+        {/* Data Display - SOLO se ci sono dati */}
         {normalizedData.length > 0 && (
           <>
             {activeTab === 'search' && (
@@ -257,12 +261,48 @@ const App = () => {
             )}
           </>
         )}
+
+        {/* Pulsante per ricaricare i dati - SOLO se ci sono dati */}
+        {normalizedData.length > 0 && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '2rem',
+            padding: '1rem',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px dashed #e5e7eb'
+          }}>
+            <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
+              Vuoi caricare un nuovo file?
+            </p>
+            <button
+              onClick={() => {
+                setFpediaData([]);
+                setError(null);
+              }}
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: '#3b82f6',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              📊 Carica Nuovo File
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal Fantamilioni */}
       {showFantamilioniModal && (
         <FantamilioniModal
+          isOpen={showFantamilioniModal}
           player={playerToAcquire}
+          playerName={playerToAcquire?.Nome}
           onConfirm={handleConfirmAcquire}
           onClose={handleCloseFantamilioniModal}
         />

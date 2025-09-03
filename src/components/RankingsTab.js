@@ -1,23 +1,24 @@
-// src/components/RankingsTab.js - Versione corretta con props allineati
-import React, { useMemo } from 'react';
+// src/components/RankingsTab.js - Versione corretta con state interno
+import React, { useMemo, useState } from 'react';
 import { filterPlayersByRole, sortPlayersByConvenienza } from '../utils/dataUtils';
 import PlayerCard from './PlayerCard';
 
 const RankingsTab = ({ 
-  data = [], // Default value per sicurezza
-  selectedRole, 
-  onRoleChange, 
+  players = [], // Rinominato da 'data' per coerenza con App.js
   playerStatus, 
-  onStatusChange,
+  onPlayerStatusChange, // Rinominato per coerenza con App.js
   onPlayerAcquire
 }) => {
+  // State interno per il ruolo selezionato
+  const [selectedRole, setSelectedRole] = useState('POR');
+
   // TUTTI i giocatori per ruolo ordinati per convenienza
   const topPlayers = useMemo(() => {
-    if (!data || !data.length) return [];
-    const filtered = filterPlayersByRole(data, selectedRole);
+    if (!players || !players.length) return [];
+    const filtered = filterPlayersByRole(players, selectedRole);
     const sorted = sortPlayersByConvenienza(filtered);
     return sorted;
-  }, [data, selectedRole]);
+  }, [players, selectedRole]);
 
   const roles = [
     { key: 'POR', label: 'Portieri', emoji: '🥅' },
@@ -25,6 +26,28 @@ const RankingsTab = ({
     { key: 'CEN', label: 'Centrocampisti', emoji: '🎯' },    
     { key: 'ATT', label: 'Attaccanti', emoji: '⚽' }
   ];
+
+  // Handler per il cambio di ruolo
+  const handleRoleChange = (roleKey) => {
+    setSelectedRole(roleKey);
+  };
+
+  function getRoleStats() {
+    if (!players || !players.length) return { total: 0, showing: 0, avgConvenienza: '0' };
+    
+    const totalPlayers = filterPlayersByRole(players, selectedRole).length;
+    const avgConvenienza = topPlayers.length > 0 
+      ? (topPlayers.reduce((sum, p) => sum + (p.convenienza || 0), 0) / topPlayers.length).toFixed(1)
+      : '0';
+    
+    return {
+      total: totalPlayers,
+      showing: totalPlayers,
+      avgConvenienza
+    };
+  }
+
+  const stats = getRoleStats();
 
   const containerStyle = {
     width: '100%'
@@ -116,23 +139,6 @@ const RankingsTab = ({
     return '#6b7280'; // Grigio per gli altri
   }
 
-  function getRoleStats() {
-    if (!data || !data.length) return { total: 0, showing: 0, avgConvenienza: '0' };
-    
-    const totalPlayers = filterPlayersByRole(data, selectedRole).length;
-    const avgConvenienza = topPlayers.length > 0 
-      ? (topPlayers.reduce((sum, p) => sum + (p.convenienza || 0), 0) / topPlayers.length).toFixed(1)
-      : '0';
-    
-    return {
-      total: totalPlayers,
-      showing: totalPlayers,
-      avgConvenienza
-    };
-  }
-
-  const stats = getRoleStats();
-
   return (
     <div style={containerStyle}>
       {/* Header */}
@@ -146,7 +152,7 @@ const RankingsTab = ({
           {roles.map(role => (
             <button
               key={role.key}
-              onClick={() => onRoleChange(role.key)}
+              onClick={() => handleRoleChange(role.key)}
               style={{
                 ...roleButtonStyle,
                 ...(selectedRole === role.key ? activeRoleButtonStyle : inactiveRoleButtonStyle)
@@ -170,7 +176,7 @@ const RankingsTab = ({
           ))}
         </div>
 
-        {/* Stats Summary */}
+        {/* Stats Summary - SENZA TOGGLE DUPLICATO */}
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -215,7 +221,7 @@ const RankingsTab = ({
               <PlayerCard
                 player={player}
                 playerStatus={playerStatus}
-                onStatusChange={onStatusChange}
+                onStatusChange={onPlayerStatusChange}
                 onAcquire={onPlayerAcquire}
               />
             </div>
@@ -225,13 +231,13 @@ const RankingsTab = ({
         <div style={emptyStateStyle}>
           <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🤷‍♂️</div>
           <p style={{ fontSize: '1.1rem', marginBottom: '0.5rem', color: '#374151' }}>
-            {!data || !data.length 
+            {!players || !players.length 
               ? 'Nessun dato caricato' 
               : `Nessun giocatore trovato per il ruolo ${selectedRole}`
             }
           </p>
           <p style={{ color: '#9ca3af' }}>
-            {!data || !data.length 
+            {!players || !players.length 
               ? 'Carica il file Excel per visualizzare i giocatori'
               : 'Verifica che i dati siano stati caricati correttamente'
             }
@@ -240,7 +246,7 @@ const RankingsTab = ({
       )}
 
       {/* Role indicator with player count */}
-      {data && data.length > 0 && (
+      {players && players.length > 0 && (
         <div style={{
           position: 'fixed',
           bottom: '20px',
