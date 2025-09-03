@@ -1,10 +1,10 @@
-// src/App.js - Versione aggiornata con PlayersTab unificato
+// src/App.js - Versione aggiornata con sistema di tab
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
 import FantamilioniModal from './components/FantamilioniModal';
-import FileUpload from './components/FileUpload';
 import Header from './components/Header';
-import PlayersTab from './components/PlayersTab'; // Componente unificato
+import PlayersTab from './components/PlayersTab';
+import RosaAcquistata from './components/RosaAcquistata';
 import { normalizePlayerData } from './utils/dataUtils';
 import { loadPlayerStatus, savePlayerStatus, updatePlayerStatus } from './utils/storage';
 
@@ -14,6 +14,7 @@ const App = () => {
   const [playerStatus, setPlayerStatus] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('giocatori'); // Nuovo state per tab attiva
 
   // Stati per la modal fantamilioni
   const [showFantamilioniModal, setShowFantamilioniModal] = useState(false);
@@ -25,6 +26,11 @@ const App = () => {
     setPlayerStatus(status);
     loadDataFromPublic();
   }, []);
+
+  // Salva automaticamente lo status dei giocatori
+  useEffect(() => {
+    savePlayerStatus(playerStatus);
+  }, [playerStatus]);
 
   // Caricamento automatico del file dalla cartella public
   const loadDataFromPublic = async () => {
@@ -51,31 +57,6 @@ const App = () => {
     }
   };
 
-  // Caricamento manuale del file
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    setLoading(true);
-    setError(null);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const workbook = XLSX.read(e.target.result);
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
-        setFpediaData(jsonData);
-      } catch (err) {
-        setError('Errore nella lettura del file. Assicurati che sia un file Excel valido.');
-        console.error('Errore parsing Excel:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
   // Normalizza i dati e crea indice di ricerca
   const normalizedDataWithIndex = useMemo(() => {
     if (!fpediaData.length) return { players: [], searchIndex: null };
@@ -85,188 +66,243 @@ const App = () => {
   const normalizedData = normalizedDataWithIndex.players;
   const searchIndex = normalizedDataWithIndex.searchIndex;
 
-  // Salva lo status quando cambia
-  useEffect(() => {
-    if (Object.keys(playerStatus).length > 0) {
-      savePlayerStatus(playerStatus);
-    }
-  }, [playerStatus]);
-
-  // Gestione cambio status giocatore
-  const handlePlayerStatusChange = (playerId, newStatus) => {
-    setPlayerStatus(prev => updatePlayerStatus(prev, playerId, newStatus));
+  // Gestione status giocatori
+  const handlePlayerStatusChange = (playerId, status, fantamilioni = null) => {
+    const newStatus = updatePlayerStatus(playerStatus, playerId, status, fantamilioni);
+    setPlayerStatus(newStatus);
   };
 
-  // Gestione acquisizione giocatore
+  // Gestione acquisto giocatore con fantamilioni
   const handlePlayerAcquire = (player) => {
     setPlayerToAcquire(player);
     setShowFantamilioniModal(true);
   };
 
-  // Conferma acquisizione con fantamilioni
-  const handleConfirmAcquire = (fantamilioni) => {
+  const handleFantamilioniConfirm = (fantamilioni) => {
     if (playerToAcquire) {
-      setPlayerStatus(prev => updatePlayerStatus(prev, playerToAcquire.id, 'acquired', fantamilioni));
+      handlePlayerStatusChange(playerToAcquire.id, 'acquired', fantamilioni);
       setShowFantamilioniModal(false);
       setPlayerToAcquire(null);
     }
   };
 
-  // Chiudi modal fantamilioni
-  const handleCloseFantamilioniModal = () => {
+  const handleFantamilioniCancel = () => {
     setShowFantamilioniModal(false);
     setPlayerToAcquire(null);
   };
 
+  // Definizione delle tab
+  const tabs = [
+    {
+      id: 'giocatori',
+      label: 'Giocatori',
+      emoji: '🔍',
+      description: 'Cerca e acquista giocatori'
+    },
+    {
+      id: 'rosa',
+      label: 'Rosa Acquistata',
+      emoji: '👥',
+      description: 'La tua rosa per ruolo'
+    }
+  ];
+
   // Stili
   const containerStyle = {
     minHeight: '100vh',
-    backgroundColor: '#f9fafb',
-    padding: '1rem'
+    backgroundColor: '#f8fafc'
   };
 
-  const contentStyle = {
-    maxWidth: '1400px',
-    margin: '0 auto'
-  };
-
-  const mainContentStyle = {
+  const tabNavigationStyle = {
     backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '2rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    marginTop: '1rem'
+    borderBottom: '2px solid #e2e8f0',
+    padding: '0 2rem',
+    display: 'flex',
+    justifyContent: 'center'
+  };
+
+  const tabButtonStyle = {
+    padding: '1rem 2rem',
+    border: 'none',
+    backgroundColor: 'transparent',
+    cursor: 'pointer',
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#64748b',
+    borderBottom: '3px solid transparent',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  };
+
+  const activeTabStyle = {
+    ...tabButtonStyle,
+    color: '#3b82f6',
+    borderBottomColor: '#3b82f6'
+  };
+
+  const tabContentStyle = {
+    flex: 1
   };
 
   return (
     <div style={containerStyle}>
-      <div style={contentStyle}>
-        {/* Header */}
-        <Header playerStatus={playerStatus} playersData={normalizedData} />
+      {/* Header */}
+      <Header 
+        dataCount={normalizedData.length}
+        playerStatus={playerStatus}
+      />
 
-        {/* Main Content */}
-        <div style={mainContentStyle}>
-          {/* Loading State */}
-          {loading && (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '3rem',
-              color: '#6b7280' 
+      {/* Tab Navigation - Solo se ci sono dati */}
+      {normalizedData.length > 0 && (
+        <div style={tabNavigationStyle}>
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={activeTab === tab.id ? activeTabStyle : tabButtonStyle}
+              onMouseEnter={(e) => {
+                if (activeTab !== tab.id) {
+                  e.target.style.color = '#374151';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeTab !== tab.id) {
+                  e.target.style.color = '#64748b';
+                }
+              }}
+              title={tab.description}
+            >
+              <span>{tab.emoji}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Content */}
+      <div style={tabContentStyle}>
+        {/* Loading State */}
+        {loading && (
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '4rem',
+            backgroundColor: '#f8fafc'
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1rem'
             }}>
-              <div style={{ 
-                fontSize: '2rem', 
-                marginBottom: '1rem' 
-              }}>
-                ⏳
-              </div>
-              <p style={{ fontSize: '1.1rem', fontWeight: '500' }}>
+              <div style={{
+                width: '3rem',
+                height: '3rem',
+                border: '3px solid #e2e8f0',
+                borderTop: '3px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} />
+              <p style={{ color: '#6b7280', fontWeight: '500' }}>
                 Caricamento dati in corso...
               </p>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Error State */}
-          {error && !loading && (
-            <div style={{
-              textAlign: 'center',
-              padding: '2rem',
-              backgroundColor: '#fef2f2',
-              borderRadius: '8px',
-              border: '1px solid #fecaca',
-              marginBottom: '2rem'
+        {/* Error State */}
+        {!loading && error && (
+          <div style={{
+            textAlign: 'center',
+            padding: '2rem',
+            backgroundColor: '#fef2f2',
+            borderRadius: '8px',
+            border: '1px solid #fecaca',
+            margin: '2rem',
+            maxWidth: '800px',
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          }}>
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
+            <p style={{ color: '#dc2626', fontWeight: '500', marginBottom: '1rem' }}>
+              {error}
+            </p>
+          </div>
+        )}
+
+        {/* No Data State */}
+        {!loading && !error && normalizedData.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '4rem 2rem'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
+            <h2 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '600', 
+              color: '#374151', 
+              marginBottom: '1rem' 
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚠️</div>
-              <p style={{ color: '#dc2626', fontWeight: '500', marginBottom: '1rem' }}>
-                {error}
-              </p>
-              <FileUpload onFileUpload={handleFileUpload} />
-            </div>
-          )}
-
-          {/* No Data State */}
-          {!loading && !error && normalizedData.length === 0 && (
-            <div style={{
-              textAlign: 'center',
-              padding: '4rem 2rem'
+              Carica i dati per iniziare
+            </h2>
+            <p style={{ 
+              color: '#6b7280', 
+              marginBottom: '2rem', 
+              lineHeight: '1.6' 
             }}>
-              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-              <h2 style={{ 
-                fontSize: '1.5rem', 
-                fontWeight: '600', 
-                color: '#374151', 
-                marginBottom: '1rem' 
-              }}>
-                Carica i dati per iniziare
-              </h2>
-              <p style={{ 
-                color: '#6b7280', 
-                marginBottom: '2rem', 
-                lineHeight: '1.6' 
-              }}>
-                Carica il file Excel con i dati dei giocatori per iniziare<br />
-                ad esplorare statistiche, classifiche e gestire la tua rosa.
-              </p>
-              <FileUpload onFileUpload={handleFileUpload} />
-            </div>
-          )}
+              Carica il file Excel con i dati dei giocatori per iniziare<br />
+              ad esplorare statistiche, classifiche e gestire la tua rosa.
+            </p>
+          </div>
+        )}
 
-          {/* Data Display - Componente Unificato */}
-          {normalizedData.length > 0 && (
-            <PlayersTab
-              players={normalizedData}
-              searchIndex={searchIndex}
-              playerStatus={playerStatus}
-              onPlayerStatusChange={handlePlayerStatusChange}
-              onPlayerAcquire={handlePlayerAcquire}
-            />
-          )}
+        {/* Tab Content - Solo se ci sono dati */}
+        {normalizedData.length > 0 && (
+          <>
+            {/* Tab Giocatori */}
+            {activeTab === 'giocatori' && (
+              <PlayersTab
+                players={normalizedData}
+                searchIndex={searchIndex}
+                playerStatus={playerStatus}
+                onPlayerStatusChange={handlePlayerStatusChange}
+                onPlayerAcquire={handlePlayerAcquire}
+              />
+            )}
 
-          {/* Pulsante per ricaricare i dati */}
-          {normalizedData.length > 0 && (
-            <div style={{ 
-              textAlign: 'center', 
-              marginTop: '2rem',
-              padding: '1rem',
-              backgroundColor: '#f8fafc',
-              borderRadius: '8px',
-              border: '1px dashed #e5e7eb'
-            }}>
-              <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
-                Vuoi caricare un nuovo file?
-              </p>
-              <button
-                onClick={() => {
-                  setFpediaData([]);
-                  setError(null);
-                }}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  fontWeight: '500'
-                }}
-              >
-                📊 Carica Nuovo File
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Modal Fantamilioni */}
-        {showFantamilioniModal && (
-          <FantamilioniModal
-            isOpen={showFantamilioniModal}
-            player={playerToAcquire}
-            playerName={playerToAcquire?.Nome}
-            onConfirm={handleConfirmAcquire}
-            onClose={handleCloseFantamilioniModal}
-          />
+            {/* Tab Rosa Acquistata */}
+            {activeTab === 'rosa' && (
+              <RosaAcquistata
+                players={normalizedData}
+                playerStatus={playerStatus}
+                onPlayerStatusChange={handlePlayerStatusChange}
+              />
+            )}
+          </>
         )}
       </div>
+
+      {/* Modal Fantamilioni */}
+      {showFantamilioniModal && (
+        <FantamilioniModal
+          player={playerToAcquire}
+          onConfirm={handleFantamilioniConfirm}
+          onCancel={handleFantamilioniCancel}
+        />
+      )}
+
+      {/* CSS per l'animazione di loading */}
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
     </div>
   );
 };
