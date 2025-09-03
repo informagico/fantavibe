@@ -1,6 +1,6 @@
-// src/components/RosaAcquistata.js - Versione pulita senza dati duplicati
+// src/components/RosaAcquistata.js
 import React, { useMemo } from 'react';
-import { getAcquiredPlayers } from '../utils/storage';
+import { getAcquiredPlayers, getPlayerStatsByRole, getTotalFantamilioni } from '../utils/storage';
 
 const RosaAcquistata = ({ 
   players = [],
@@ -53,94 +53,123 @@ const RosaAcquistata = ({
   }, [acquiredPlayersDetails]);
 
   // Statistiche totali
+  const totalFantamilioni = getTotalFantamilioni(playerStatus);
   const totalPlayers = acquiredPlayersDetails.length;
 
   // Gestori eventi
   const handleRemovePlayer = (playerId) => {
     if (window.confirm('Sei sicuro di voler rimuovere questo giocatore dalla rosa?')) {
-      onPlayerStatusChange(playerId, null);
+      onPlayerStatusChange(playerId, 'available');
     }
   };
 
   // Stili
   const containerStyle = {
-    minHeight: '100vh',
-    backgroundColor: '#f8fafc',
-    padding: '2rem'
+    padding: '2rem',
+    maxWidth: '1200px',
+    margin: '0 auto'
   };
 
   const headerStyle = {
-    maxWidth: '1200px',
-    margin: '0 auto 2rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '1rem'
+    marginBottom: '2rem',
+    textAlign: 'center'
   };
 
   const titleStyle = {
     fontSize: '2rem',
     fontWeight: 'bold',
     color: '#1e293b',
-    margin: 0,
+    marginBottom: '1rem',
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: '0.75rem'
   };
 
+  const summaryStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '3rem',
+    marginBottom: '2rem',
+    flexWrap: 'wrap'
+  };
+
+  const summaryItemStyle = {
+    textAlign: 'center',
+    padding: '1rem',
+    backgroundColor: '#f8fafc',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+    minWidth: '120px'
+  };
+
+  const summaryValueStyle = {
+    fontSize: '2rem',
+    fontWeight: 'bold',
+    color: '#3b82f6',
+    marginBottom: '0.25rem'
+  };
+
+  const summaryLabelStyle = {
+    fontSize: '0.875rem',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    letterSpacing: '0.05em'
+  };
+
   const rolesGridStyle = {
-    maxWidth: '1200px',
-    margin: '0 auto',
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '1.5rem'
+    gap: '2rem',
+    marginTop: '2rem'
   };
 
   const roleCardStyle = {
     backgroundColor: 'white',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e2e8f0'
+    border: '2px solid #e2e8f0',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    transition: 'all 0.2s'
   };
 
   const roleHeaderStyle = {
-    marginBottom: '1rem',
-    paddingBottom: '0.75rem',
-    borderBottom: '2px solid #f1f5f9'
+    padding: '1rem 1.5rem',
+    backgroundColor: '#f8fafc',
+    borderBottom: '1px solid #e2e8f0',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
   };
 
   const roleTitleStyle = {
     fontSize: '1.25rem',
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#1e293b',
-    margin: '0 0 0.5rem 0',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem'
   };
 
   const roleStatsStyle = {
+    display: 'flex',
+    gap: '1rem',
     fontSize: '0.875rem',
-    color: '#64748b',
-    fontWeight: '500'
+    color: '#64748b'
   };
 
   const playersListStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.75rem'
+    padding: '0'
   };
 
   const playerItemStyle = {
+    padding: '1rem 1.5rem',
+    borderBottom: '1px solid #f1f5f9',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '0.75rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '8px',
-    border: '1px solid #e2e8f0'
+    transition: 'background-color 0.2s'
   };
 
   const playerInfoStyle = {
@@ -148,36 +177,26 @@ const RosaAcquistata = ({
   };
 
   const playerNameStyle = {
+    fontSize: '1rem',
     fontWeight: '600',
     color: '#1e293b',
-    fontSize: '1rem',
-    margin: '0 0 0.25rem 0'
+    marginBottom: '0.25rem'
   };
 
   const playerDetailsStyle = {
     fontSize: '0.875rem',
-    color: '#64748b',
-    display: 'flex',
-    gap: '1rem',
-    flexWrap: 'wrap'
+    color: '#64748b'
   };
 
-  const playerActionsStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem'
-  };
-
-  const fantamilioniStyle = {
+  const playerPriceStyle = {
     fontSize: '1.125rem',
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#dc2626',
-    minWidth: '60px',
-    textAlign: 'right'
+    marginRight: '1rem'
   };
 
   const removeButtonStyle = {
-    padding: '0.25rem 0.5rem',
+    padding: '0.5rem',
     backgroundColor: 'transparent',
     border: '1px solid #ef4444',
     borderRadius: '6px',
@@ -214,7 +233,7 @@ const RosaAcquistata = ({
       <div style={containerStyle}>
         <div style={headerStyle}>
           <h1 style={titleStyle}>
-            👥 La Tua Rosa
+            👥 Rosa Acquistata
           </h1>
         </div>
         
@@ -242,11 +261,33 @@ const RosaAcquistata = ({
 
   return (
     <div style={containerStyle}>
-      {/* Header semplificato */}
+      {/* Header */}
       <div style={headerStyle}>
         <h1 style={titleStyle}>
-          👥 La Tua Rosa
+          👥 Rosa Acquistata
         </h1>
+        
+        {/* Statistiche generali */}
+        <div style={summaryStyle}>
+          <div style={summaryItemStyle}>
+            <div style={summaryValueStyle}>{totalPlayers}</div>
+            <div style={summaryLabelStyle}>Giocatori</div>
+          </div>
+          
+          <div style={summaryItemStyle}>
+            <div style={{ ...summaryValueStyle, color: '#dc2626' }}>
+              {totalFantamilioni}
+            </div>
+            <div style={summaryLabelStyle}>Fantamilioni</div>
+          </div>
+          
+          <div style={summaryItemStyle}>
+            <div style={{ ...summaryValueStyle, color: '#059669' }}>
+              {totalPlayers > 0 ? Math.round(totalFantamilioni / totalPlayers) : 0}
+            </div>
+            <div style={summaryLabelStyle}>Media FM</div>
+          </div>
+        </div>
       </div>
 
       {/* Griglia ruoli */}
@@ -263,9 +304,9 @@ const RosaAcquistata = ({
                   {roleData.name}
                 </div>
                 <div style={roleStatsStyle}>
-                  {roleStats.count} giocator{roleStats.count === 1 ? 'e' : 'i'}
+                  <span>{roleStats.count} giocatori</span>
                   {roleStats.total > 0 && (
-                    <span> • {roleStats.total}FM spesi</span>
+                    <span>• {roleStats.total} FM</span>
                   )}
                 </div>
               </div>
@@ -277,36 +318,54 @@ const RosaAcquistata = ({
                     Nessun {roleData.name.toLowerCase()} acquistato
                   </div>
                 ) : (
-                  roleStats.players.map((player) => (
-                    <div key={player.id} style={playerItemStyle}>
+                  roleStats.players.map((player, index) => (
+                    <div 
+                      key={player.id} 
+                      style={{
+                        ...playerItemStyle,
+                        ...(index === roleStats.players.length - 1 ? { borderBottom: 'none' } : {})
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8fafc';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
                       <div style={playerInfoStyle}>
-                        <div style={playerNameStyle}>{player.Nome}</div>
+                        <div style={playerNameStyle}>
+                          {player.Nome}
+                        </div>
                         <div style={playerDetailsStyle}>
-                          <span>📍 {player.Squadra}</span>
-                          <span>🏆 {player.Convenienza || 'N/A'}</span>
-                          {player.Quotazione && (
-                            <span>💰 {player.Quotazione}FM</span>
+                          {player.Squadra} 
+                          {player.convenienza && (
+                            <span> • Conv: {player.convenienza.toFixed(1)}</span>
+                          )}
+                          {player.Fanta_Voto && (
+                            <span> • Voto: {player.Fanta_Voto}</span>
                           )}
                         </div>
                       </div>
                       
-                      <div style={playerActionsStyle}>
-                        <div style={fantamilioniStyle}>
-                          {player.fantamilioni || 0}FM
-                        </div>
-                        <button
-                          onClick={() => handleRemovePlayer(player.id)}
-                          style={removeButtonStyle}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#fef2f2';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
-                          }}
-                        >
-                          Rimuovi
-                        </button>
+                      <div style={playerPriceStyle}>
+                        {player.fantamilioni} FM
                       </div>
+                      
+                      <button
+                        onClick={() => handleRemovePlayer(player.id)}
+                        style={removeButtonStyle}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#ef4444';
+                          e.target.style.color = 'white';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'transparent';
+                          e.target.style.color = '#ef4444';
+                        }}
+                        title="Rimuovi dalla rosa"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ))
                 )}
