@@ -14,9 +14,7 @@ const PlayerCard = ({
   const fantamilioni = playerDetails?.fantamilioni || null;
 
   // Controlla se il giocatore è infortunato
-  const isInjured = player.Infortunato === true || player.Injured === true || 
-                   player.Infortunato === 'Sì' || player.Injured === 'Yes' ||
-                   player.Infortunato === 'SI' || player.Injured === 'YES';
+  const isInjured = player.Infortunato === 'true';
 
   const handleStatusChange = (newStatus) => {
     if (newStatus === 'acquired' && onAcquire) {
