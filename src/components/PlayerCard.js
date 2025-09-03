@@ -1,4 +1,4 @@
-// src/components/PlayerCard.js - Versione con conferma per reset
+// src/components/PlayerCard.js - Versione con solo prevenzione doppio click
 import React from 'react';
 import { getPlayerDetails } from '../utils/storage';
 
@@ -28,6 +28,12 @@ const PlayerCard = ({
   const handleButtonClick = (e, action) => {
     e.stopPropagation();
     e.preventDefault();
+    
+    // *** NUOVA MODIFICA: Previene doppio click per acquisto ***
+    if (action === 'acquired' && currentStatus === 'acquired') {
+      console.log('Giocatore già acquistato, azione bloccata');
+      return; // Blocca completamente l'azione
+    }
     
     // AGGIUNTO: Messaggio di conferma per il reset
     if (action === 'available' && (currentStatus === 'acquired' || currentStatus === 'unavailable')) {
@@ -79,7 +85,7 @@ const PlayerCard = ({
 
   const statsToShow = showAllStats ? allStats : baseStats;
 
-  // Stili base
+  // Stili base (MANTENIAMO TUTTO IDENTICO)
   const cardStyle = {
     backgroundColor: 'white',
     border: '2px solid #e5e7eb',
@@ -88,7 +94,7 @@ const PlayerCard = ({
     transition: 'all 0.2s',
     position: 'relative',
     overflow: 'hidden',
-    // Rimuoviamo il cursor pointer dato che non è più clickabile
+    // Rimuoviamo il cursor pointer dato che non è più clickable
     ...(isInjured && {
       backgroundColor: '#fef2f2',
       borderColor: '#ef4444',
@@ -271,7 +277,7 @@ const PlayerCard = ({
         ))}
       </div>
 
-      {/* Action buttons */}
+      {/* Action buttons - STILE IDENTICO ALL'ORIGINALE */}
       <div style={buttonContainerStyle}>
         <button
           onClick={(e) => handleButtonClick(e, 'acquired')}

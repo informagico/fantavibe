@@ -132,7 +132,7 @@ const Header = ({ dataCount = 0, playerStatus = {} }) => {
         {/* Titolo */}
         <div>
           <h1 style={titleStyle}>
-            ⚽ Fantacalcio Analyzer
+            ⚽ Fantavibe
           </h1>
           {dataCount > 0 && (
             <p style={{ 
