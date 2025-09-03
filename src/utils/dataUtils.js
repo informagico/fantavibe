@@ -1,4 +1,3 @@
-// src/utils/dataUtils.js - Versione ottimizzata
 
 /**
  * Cache per la normalizzazione dei nomi
@@ -6,7 +5,7 @@
 const nameNormalizationCache = new Map();
 
 /**
- * Normalizza un nome per il matching tra dataset (con cache)
+ * Normalizza un nome per il matching e la ricerca (con cache)
  */
 export const normalizeName = (name) => {
   if (!name) return '';
@@ -74,34 +73,22 @@ const createSearchIndex = (players) => {
 };
 
 /**
- * Combina i dati da FPEDIA e FSTATS con ottimizzazioni
+ * Normalizza i dati da FPEDIA con ottimizzazioni
  */
-export const normalizePlayerData = (fpediaData, fstatsData) => {
+export const normalizePlayerData = (fpediaData) => {
   if (!fpediaData.length) return { players: [], searchIndex: new Map() };
   
   console.time('🚀 Data normalization optimized');
   
-  // Crea un Map per FSTATS per lookup O(1)
-  const fstatsMap = new Map();
-  fstatsData.forEach(player => {
-    const normalizedName = normalizeName(player.Nome);
-    fstatsMap.set(normalizedName, player);
-  });
-  
-  console.log(`📊 FSTATS map created: ${fstatsMap.size} players indexed`);
-  
-  // Combina i dati
+  // Normalizza i dati
   const players = fpediaData.map(fpediaPlayer => {
     const normalizedName = normalizeName(fpediaPlayer.Nome);
-    const fstatsPlayer = fstatsMap.get(normalizedName);
-
     const playerId = fpediaPlayer.Nome 
       ? fpediaPlayer.Nome.replace(/\s+/g, '_').toLowerCase()
       : `player_${Math.random().toString(36).substr(2, 9)}`;
 
     return {
       ...fpediaPlayer,
-      fstatsData: fstatsPlayer || null,
       id: playerId,
       normalizedName, // Pre-calcolato per performance
       // Campi normalizzati per consistenza
@@ -118,16 +105,11 @@ export const normalizePlayerData = (fpediaData, fstatsData) => {
   console.timeEnd('🚀 Data normalization optimized');
   console.log(`✅ Created index for ${players.length} players with ${searchIndex.size} search terms`);
   
-  // Statistiche di matching
-  const withFStats = players.filter(p => p.fstatsData !== null);
-  const matchingPercentage = Math.round((withFStats.length / players.length) * 100);
-  console.log(`🎯 FSTATS matching: ${withFStats.length}/${players.length} (${matchingPercentage}%)`);
-  
   return { players, searchIndex };
 };
 
 /**
- * Filtra giocatori per ruolo (mantenuta per compatibilità)
+ * Filtra giocatori per ruolo
  */
 export const filterPlayersByRole = (players, role) => {
   return players.filter(player => player.Ruolo === role);
@@ -223,23 +205,6 @@ export const getRoleStats = (players, role) => {
     avgConvenienza: (totalConvenienza / rolePlayers.length).toFixed(2),
     avgFantamedia: (totalFantamedia / rolePlayers.length).toFixed(2)
   };
-};
-
-/**
- * Verifica se un giocatore ha statistiche FStats
- */
-export const hasFStatsData = (player) => {
-  return player.fstatsData !== null && player.fstatsData !== undefined;
-};
-
-/**
- * Ottiene la percentuale di matching tra FPEDIA e FSTATS
- */
-export const getMatchingPercentage = (players) => {
-  if (!players.length) return 0;
-  
-  const playersWithFStats = players.filter(hasFStatsData);
-  return Math.round((playersWithFStats.length / players.length) * 100);
 };
 
 /**

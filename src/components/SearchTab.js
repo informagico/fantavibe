@@ -1,4 +1,3 @@
-// src/components/SearchTab.js - Versione aggiornata
 import { Search } from 'lucide-react';
 import React, { useMemo } from 'react';
 import { searchPlayers } from '../utils/dataUtils';
@@ -10,7 +9,7 @@ const SearchTab = ({
   onSearchChange, 
   playerStatus, 
   onStatusChange,
-  onPlayerAcquire, // 🆕 Nuova prop per gestire l'acquisto
+  onPlayerAcquire,
   searchIndex 
 }) => {
   // Risultati di ricerca ottimizzati
@@ -197,7 +196,7 @@ const SearchTab = ({
                   player={player}
                   playerStatus={playerStatus}
                   onStatusChange={onStatusChange}
-                  onAcquire={onPlayerAcquire} // 🆕 Pass the acquire handler
+                  onAcquire={onPlayerAcquire}
                 />
               ))}
             </div>

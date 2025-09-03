@@ -1,4 +1,4 @@
-// src/components/Header.js - Versione aggiornata con fantamilioni
+// src/components/Header.js - Versione aggiornata con gestione props corretta
 import React from 'react';
 import {
   clearPlayerStatus,
@@ -7,7 +7,7 @@ import {
   getTotalFantamilioni
 } from '../utils/storage';
 
-const Header = ({ dataCount, playerStatus }) => {
+const Header = ({ dataCount = 0, playerStatus = {} }) => {
   const totalFantamilioni = getTotalFantamilioni(playerStatus);
   const acquiredPlayers = getAcquiredPlayers(playerStatus);
   const totalAcquired = acquiredPlayers.length;
@@ -41,89 +41,67 @@ const Header = ({ dataCount, playerStatus }) => {
     }
   };
 
+  // Stili
   const headerStyle = {
     backgroundColor: 'white',
-    borderBottom: '3px solid #e2e8f0',
+    borderBottom: '2px solid #e2e8f0',
     padding: '1.5rem 0',
-    marginBottom: '0'
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
   };
 
   const containerStyle = {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '0 1rem'
-  };
-
-  const topRowStyle = {
+    padding: '0 1rem',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.5rem'
+    flexWrap: 'wrap',
+    gap: '1rem'
   };
 
   const titleStyle = {
-    fontSize: '2rem',
-    fontWeight: '800',
-    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-    backgroundClip: 'text',
-    color: 'transparent',
-    margin: 0
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+    color: '#1e293b',
+    margin: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem'
   };
 
-  const subtitleStyle = {
-    fontSize: '0.875rem',
-    color: '#6b7280',
-    marginTop: '0.25rem'
+  const statsContainerStyle = {
+    display: 'flex',
+    gap: '2rem',
+    alignItems: 'center',
+    flexWrap: 'wrap'
   };
 
-  const statsRowStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1rem'
-  };
-
-  const statCardStyle = {
-    backgroundColor: '#f8fafc',
-    padding: '1rem',
-    borderRadius: '10px',
-    border: '1px solid #e2e8f0',
-    textAlign: 'center'
+  const statStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    minWidth: '80px'
   };
 
   const statValueStyle = {
     fontSize: '1.5rem',
-    fontWeight: '700',
-    marginBottom: '0.25rem'
+    fontWeight: 'bold',
+    color: '#3b82f6',
+    margin: 0
   };
 
   const statLabelStyle = {
     fontSize: '0.75rem',
-    color: '#6b7280',
-    fontWeight: '500',
+    color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px'
+    fontWeight: '600',
+    margin: 0,
+    marginTop: '0.25rem',
+    textAlign: 'center'
   };
 
-  const fantamilioniCardStyle = {
-    ...statCardStyle,
-    background: 'linear-gradient(135deg, #10b981, #059669)',
-    color: 'white',
-    border: 'none'
-  };
-
-  const fantamilioniValueStyle = {
-    ...statValueStyle,
-    color: 'white',
-    fontSize: '1.75rem'
-  };
-
-  const fantamilioniLabelStyle = {
-    ...statLabelStyle,
-    color: 'rgba(255,255,255,0.8)'
-  };
-
-  const actionButtonsStyle = {
+  const actionsStyle = {
     display: 'flex',
     gap: '0.75rem',
     alignItems: 'center'
@@ -131,213 +109,83 @@ const Header = ({ dataCount, playerStatus }) => {
 
   const buttonStyle = {
     padding: '0.5rem 1rem',
+    borderRadius: '0.375rem',
     border: '1px solid #d1d5db',
-    borderRadius: '6px',
     backgroundColor: 'white',
     color: '#374151',
     fontSize: '0.875rem',
     fontWeight: '500',
     cursor: 'pointer',
-    transition: 'all 0.2s',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.375rem'
-  };
-
-  const exportButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#3b82f6',
-    color: 'white',
-    border: '1px solid #3b82f6'
+    transition: 'all 0.2s'
   };
 
   const clearButtonStyle = {
     ...buttonStyle,
-    backgroundColor: '#ef4444',
+    backgroundColor: '#dc2626',
     color: 'white',
-    border: '1px solid #ef4444'
+    borderColor: '#dc2626'
   };
-
-  const budgetInfoStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    padding: '0.75rem 1rem',
-    backgroundColor: totalFantamilioni > 500 ? '#fef2f2' : '#f0fdf4',
-    borderRadius: '8px',
-    border: `1px solid ${totalFantamilioni > 500 ? '#fecaca' : '#bbf7d0'}`,
-    marginTop: '1rem'
-  };
-
-  const budgetTextStyle = {
-    fontSize: '0.875rem',
-    color: totalFantamilioni > 500 ? '#dc2626' : '#059669',
-    fontWeight: '500'
-  };
-
-  const remainingBudget = 500 - totalFantamilioni;
 
   return (
-    <div style={headerStyle}>
+    <header style={headerStyle}>
       <div style={containerStyle}>
-        {/* Top Row */}
-        <div style={topRowStyle}>
-          <div>
-            <h1 style={titleStyle}>⚽ FantaCalcio Manager</h1>
-            <p style={subtitleStyle}>
-              {dataCount > 0 ? `${dataCount} giocatori caricati` : 'Nessun dato caricato'}
+        {/* Titolo */}
+        <div>
+          <h1 style={titleStyle}>
+            ⚽ Fantacalcio Analyzer
+          </h1>
+          {dataCount > 0 && (
+            <p style={{ 
+              margin: 0, 
+              color: '#64748b', 
+              fontSize: '0.875rem',
+              marginTop: '0.25rem'
+            }}>
+              {dataCount} giocatori caricati
             </p>
+          )}
+        </div>
+
+        {/* Statistiche */}
+        <div style={statsContainerStyle}>
+          <div style={statStyle}>
+            <div style={statValueStyle}>{totalAcquired}</div>
+            <div style={statLabelStyle}>Acquistati</div>
           </div>
           
-          <div style={actionButtonsStyle}>
-            <button
-              onClick={handleExportData}
-              style={exportButtonStyle}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#2563eb';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#3b82f6';
-              }}
-              title="Esporta i tuoi dati"
-            >
-              💾 Esporta
-            </button>
-            
-            <button
-              onClick={handleClearAll}
-              style={clearButtonStyle}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#dc2626';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#ef4444';
-              }}
-              title="Cancella tutti i dati"
-            >
-              🗑️ Reset
-            </button>
+          <div style={statStyle}>
+            <div style={statValueStyle}>{unavailablePlayers}</div>
+            <div style={statLabelStyle}>Non Disp.</div>
+          </div>
+          
+          <div style={statStyle}>
+            <div style={{ ...statValueStyle, color: '#dc2626' }}>
+              {totalFantamilioni}
+            </div>
+            <div style={statLabelStyle}>Fantamilioni</div>
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div style={statsRowStyle}>
-          {/* Fantamilioni Spesi */}
-          <div style={fantamilioniCardStyle}>
-            <div style={fantamilioniValueStyle}>
-              {totalFantamilioni.toFixed(0)}
-            </div>
-            <div style={fantamilioniLabelStyle}>
-              Fantamilioni Spesi
-            </div>
-          </div>
-
-          {/* Giocatori Acquistati */}
-          <div style={statCardStyle}>
-            <div style={{...statValueStyle, color: '#10b981'}}>
-              {totalAcquired}
-            </div>
-            <div style={statLabelStyle}>
-              Giocatori Acquistati
-            </div>
-          </div>
-
-          {/* Giocatori Non Disponibili */}
-          <div style={statCardStyle}>
-            <div style={{...statValueStyle, color: '#ef4444'}}>
-              {unavailablePlayers}
-            </div>
-            <div style={statLabelStyle}>
-              Non Disponibili
-            </div>
-          </div>
-
-          {/* Budget Rimanente */}
-          <div style={{...statCardStyle, ...(remainingBudget < 0 ? {backgroundColor: '#fef2f2', borderColor: '#fecaca'} : {})}}>
-            <div style={{
-              ...statValueStyle, 
-              color: remainingBudget < 0 ? '#dc2626' : remainingBudget < 50 ? '#f59e0b' : '#059669'
-            }}>
-              {remainingBudget.toFixed(0)}
-            </div>
-            <div style={statLabelStyle}>
-              Budget Rimanente
-            </div>
-          </div>
+        {/* Azioni */}
+        <div style={actionsStyle}>
+          <button 
+            onClick={handleExportData}
+            style={buttonStyle}
+            title="Esporta i dati per backup"
+          >
+            💾 Esporta
+          </button>
+          
+          <button 
+            onClick={handleClearAll}
+            style={clearButtonStyle}
+            title="Cancella tutti i dati salvati"
+          >
+            🗑️ Reset
+          </button>
         </div>
-
-        {/* Budget Alert */}
-        {(totalFantamilioni > 450 || remainingBudget < 0) && (
-          <div style={budgetInfoStyle}>
-            <span style={{ fontSize: '1.2rem' }}>
-              {remainingBudget < 0 ? '⚠️' : '💰'}
-            </span>
-            <span style={budgetTextStyle}>
-              {remainingBudget < 0 
-                ? `Hai superato il budget di ${Math.abs(remainingBudget).toFixed(0)} fantamilioni!`
-                : `Attenzione: ti rimangono solo ${remainingBudget.toFixed(0)} fantamilioni`
-              }
-            </span>
-          </div>
-        )}
-
-        {/* Breakdown by Role (solo se ci sono giocatori acquistati) */}
-        {totalAcquired > 0 && (
-          <div style={{
-            marginTop: '1rem',
-            padding: '1rem',
-            backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0'
-          }}>
-            <div style={{
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              color: '#374151',
-              marginBottom: '0.75rem',
-              textAlign: 'center'
-            }}>
-              📊 Riepilogo Acquisti per Ruolo
-            </div>
-            
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: '0.75rem',
-              fontSize: '0.75rem'
-            }}>
-              {['POR', 'DIF', 'CEN', 'ATT'].map(ruolo => {
-                const roleCount = acquiredPlayers.length > 0 ? 
-                  Math.floor(Math.random() * 3) : 0; // Placeholder
-                
-                const roleTotal = acquiredPlayers
-                  .slice(0, roleCount)
-                  .reduce((sum, p) => sum + (p.fantamilioni || 0), 0);
-
-                return (
-                  <div key={ruolo} style={{
-                    textAlign: 'center',
-                    padding: '0.5rem',
-                    backgroundColor: 'white',
-                    borderRadius: '4px'
-                  }}>
-                    <div style={{ fontWeight: '600', color: '#374151' }}>
-                      {ruolo}
-                    </div>
-                    <div style={{ color: '#6b7280', marginTop: '0.25rem' }}>
-                      {roleCount} giocatori
-                    </div>
-                    <div style={{ color: '#10b981', fontWeight: '500' }}>
-                      {roleTotal.toFixed(0)} FM
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
-    </div>
+    </header>
   );
 };
 

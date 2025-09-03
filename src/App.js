@@ -1,4 +1,3 @@
-// src/App.js - Versione aggiornata con sistema fantamilioni
 import { Search, Users } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import * as XLSX from 'xlsx';
@@ -13,7 +12,6 @@ import { loadPlayerStatus, savePlayerStatus, updatePlayerStatus } from './utils/
 const App = () => {
   // Stati principali
   const [fpediaData, setFpediaData] = useState([]);
-  const [fstatsData, setFstatsData] = useState([]);
   const [playerStatus, setPlayerStatus] = useState({});
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('search');
@@ -32,13 +30,13 @@ const App = () => {
     loadDataFromPublic();
   }, []);
 
-  // Caricamento automatico files dalla cartella public
+  // Caricamento automatico del file dalla cartella public
   const loadDataFromPublic = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // Carica FPEDIA
+      // Carica solo FPEDIA
       const fpediaResponse = await fetch('/fpedia_analysis.xlsx');
       if (fpediaResponse.ok) {
         const fpediaBuffer = await fpediaResponse.arrayBuffer();
@@ -46,26 +44,18 @@ const App = () => {
         const fpediaSheet = fpediaWorkbook.Sheets[fpediaWorkbook.SheetNames[0]];
         const fpediaJson = XLSX.utils.sheet_to_json(fpediaSheet);
         setFpediaData(fpediaJson);
-      }
-
-      // Carica FSTATS
-      const fstatsResponse = await fetch('/FSTATS_analysis.xlsx');
-      if (fstatsResponse.ok) {
-        const fstatsBuffer = await fstatsResponse.arrayBuffer();
-        const fstatsWorkbook = XLSX.read(fstatsBuffer);
-        const fstatsSheet = fstatsWorkbook.Sheets[fstatsWorkbook.SheetNames[0]];
-        const fstatsJson = XLSX.utils.sheet_to_json(fstatsSheet);
-        setFstatsData(fstatsJson);
+      } else {
+        setError('File fpedia_analysis.xlsx non trovato nella cartella public. Usa il caricamento manuale.');
       }
     } catch (err) {
-      setError('File non trovati nella cartella public. Usa il caricamento manuale.');
+      setError('Errore nel caricamento del file. Usa il caricamento manuale.');
     }
     
     setLoading(false);
   };
 
-  // Caricamento manuale files
-  const handleFileUpload = (file, fileType) => {
+  // Caricamento manuale del file
+  const handleFileUpload = (file) => {
     if (!file) return;
 
     const reader = new FileReader();
@@ -75,15 +65,10 @@ const App = () => {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         
-        if (fileType === 'fpedia') {
-          setFpediaData(jsonData);
-        } else {
-          setFstatsData(jsonData);
-        }
-        
+        setFpediaData(jsonData);
         setError(null);
       } catch (err) {
-        setError(`Errore nel caricamento del file ${fileType}: ${err.message}`);
+        setError(`Errore nel caricamento del file: ${err.message}`);
       }
     };
     reader.readAsBinaryString(file);
@@ -128,11 +113,11 @@ const App = () => {
     setShowFantamilioniModal(false);
   };
 
-  // 🚀 OTTIMIZZAZIONE: Memorizza i dati normalizzati e l'indice di ricerca
+  // Memorizza i dati normalizzati e l'indice di ricerca
   const normalizedDataWithIndex = useMemo(() => {
     console.log('🔄 Ricalcolo dati normalizzati...');
-    return normalizePlayerData(fpediaData, fstatsData);
-  }, [fpediaData, fstatsData]);
+    return normalizePlayerData(fpediaData);
+  }, [fpediaData]);
 
   // Per compatibilità con i componenti esistenti
   const normalizedData = normalizedDataWithIndex.players;
@@ -145,33 +130,46 @@ const App = () => {
     fontFamily: 'system-ui, -apple-system, sans-serif'
   };
 
-  const navigationStyle = {
+  const headerStyle = {
     backgroundColor: 'white',
-    borderBottom: '2px solid #e2e8f0',
+    borderBottom: '1px solid #e5e7eb',
     padding: '1rem 0'
   };
 
-  const navButtonStyle = {
-    padding: '0.75rem 1.5rem',
-    marginRight: '1rem',
-    border: 'none',
-    borderRadius: '8px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    display: 'inline-flex',
+  const tabsStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '2rem',
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '0 1rem'
+  };
+
+  const tabStyle = {
+    display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
+    padding: '0.75rem 1.5rem',
+    border: 'none',
+    backgroundColor: 'transparent',
+    color: '#6b7280',
+    cursor: 'pointer',
+    borderRadius: '0.5rem',
+    fontSize: '1rem',
+    fontWeight: '500',
     transition: 'all 0.2s'
   };
 
-  const activeNavStyle = {
+  const activeTabStyle = {
+    ...tabStyle,
     backgroundColor: '#3b82f6',
     color: 'white'
   };
 
-  const inactiveNavStyle = {
-    backgroundColor: '#f1f5f9',
-    color: '#64748b'
+  const contentStyle = {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '2rem 1rem'
   };
 
   return (
@@ -181,110 +179,94 @@ const App = () => {
         playerStatus={playerStatus}
       />
       
-      {(!fpediaData.length || !fstatsData.length) && (
-        <FileUpload 
-          onFileUpload={handleFileUpload}
-          error={error}
-        />
-      )}
-
-      <div style={navigationStyle}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 1rem' }}>
+      {/* Navigation Tabs */}
+      <div style={headerStyle}>
+        <div style={tabsStyle}>
           <button
+            style={activeTab === 'search' ? activeTabStyle : tabStyle}
             onClick={() => setActiveTab('search')}
-            style={{
-              ...navButtonStyle,
-              ...(activeTab === 'search' ? activeNavStyle : inactiveNavStyle)
-            }}
           >
             <Search size={18} />
-            Ricerca Giocatori
+            Cerca Giocatori
           </button>
-          
           <button
+            style={activeTab === 'rankings' ? activeTabStyle : tabStyle}
             onClick={() => setActiveTab('rankings')}
-            style={{
-              ...navButtonStyle,
-              ...(activeTab === 'rankings' ? activeNavStyle : inactiveNavStyle)
-            }}
           >
             <Users size={18} />
-            Classifica per Ruolo
+            Classifiche
           </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem 1rem' }}>
+      {/* Content */}
+      <div style={contentStyle}>
+        {/* Loading State */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '3rem',
+            color: '#6b7280'
+          }}>
             <div style={{ 
-              width: '40px', 
-              height: '40px', 
-              border: '4px solid #e2e8f0',
-              borderTop: '4px solid #3b82f6',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              margin: '0 auto 1rem'
-            }}></div>
-            <p style={{ color: '#64748b' }}>Caricamento dati...</p>
+              fontSize: '2rem', 
+              marginBottom: '1rem' 
+            }}>⚽</div>
+            <p>Caricamento dati in corso...</p>
           </div>
         )}
 
-        {activeTab === 'search' && (
-          <SearchTab 
-            data={normalizedData}
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            playerStatus={playerStatus}
-            onStatusChange={handlePlayerStatusChange}
-            onPlayerAcquire={handlePlayerAcquire} // 🆕 Nuova prop
-            searchIndex={searchIndex}
-          />
+        {/* Error State */}
+        {error && (
+          <div style={{
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '0.5rem',
+            padding: '1rem',
+            marginBottom: '1.5rem'
+          }}>
+            <p style={{ color: '#dc2626', margin: 0 }}>{error}</p>
+          </div>
         )}
 
-        {activeTab === 'rankings' && (
-          <RankingsTab 
-            data={normalizedData}
-            selectedRole={selectedRole}
-            onRoleChange={setSelectedRole}
-            playerStatus={playerStatus}
-            onStatusChange={handlePlayerStatusChange}
-            onPlayerAcquire={handlePlayerAcquire} // 🆕 Nuova prop
-          />
+        {/* File Upload */}
+        <FileUpload onFileUpload={handleFileUpload} />
+
+        {/* Data Display */}
+        {normalizedData.length > 0 && (
+          <>
+            {activeTab === 'search' && (
+              <SearchTab
+                data={normalizedData}
+                searchIndex={searchIndex}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                playerStatus={playerStatus}
+                onStatusChange={handlePlayerStatusChange}
+                onPlayerAcquire={handlePlayerAcquire}
+              />
+            )}
+
+            {activeTab === 'rankings' && (
+              <RankingsTab
+                players={normalizedData}
+                playerStatus={playerStatus}
+                onPlayerStatusChange={handlePlayerStatusChange}
+                onPlayerAcquire={handlePlayerAcquire}
+              />
+            )}
+          </>
         )}
       </div>
 
       {/* Modal Fantamilioni */}
-      <FantamilioniModal
-        isOpen={showFantamilioniModal}
-        onClose={handleCloseFantamilioniModal}
-        playerName={playerToAcquire?.Nome || ''}
-        onConfirm={handleConfirmAcquire}
-      />
-
-      {/* Performance stats per debug */}
-      {process.env.NODE_ENV === 'development' && normalizedData.length > 0 && (
-        <div style={{ 
-          position: 'fixed', 
-          bottom: '10px', 
-          right: '10px', 
-          background: 'rgba(0,0,0,0.8)', 
-          color: 'white', 
-          padding: '8px', 
-          borderRadius: '4px',
-          fontSize: '12px',
-          zIndex: 1000
-        }}>
-          📊 {normalizedData.length} players | 🔍 {searchIndex?.size || 0} terms indexed
-        </div>
+      {showFantamilioniModal && (
+        <FantamilioniModal
+          player={playerToAcquire}
+          onConfirm={handleConfirmAcquire}
+          onClose={handleCloseFantamilioniModal}
+        />
       )}
-
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

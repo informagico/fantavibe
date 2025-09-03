@@ -1,4 +1,4 @@
-// src/utils/storage.js - Versione aggiornata con fantamilioni
+// src/utils/storage.js - Versione aggiornata con gestione sicura
 
 const STORAGE_KEY = 'fantacalcio_player_status';
 
@@ -53,8 +53,10 @@ export const loadPlayerStatus = () => {
  */
 export const savePlayerStatus = (playerStatus) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(playerStatus));
-    console.log('Stati giocatori salvati:', Object.keys(playerStatus).length, 'giocatori tracciati');
+    // Gestione sicura dell'oggetto undefined
+    const statusToSave = playerStatus || {};
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(statusToSave));
+    console.log('Stati giocatori salvati:', Object.keys(statusToSave).length, 'giocatori tracciati');
   } catch (error) {
     console.error('Errore nel salvataggio dei dati:', error);
   }
@@ -69,7 +71,9 @@ export const savePlayerStatus = (playerStatus) => {
  * @returns {Object} Nuovo stato aggiornato
  */
 export const updatePlayerStatus = (currentStatus, playerId, status, fantamilioni = null) => {
-  const newStatus = { ...currentStatus };
+  // Gestione sicura dell'oggetto undefined
+  const safeCurrentStatus = currentStatus || {};
+  const newStatus = { ...safeCurrentStatus };
   
   if (status === 'none' || status === 'available') {
     // Rimuove il giocatore o lo imposta come disponibile
@@ -97,7 +101,9 @@ export const updatePlayerStatus = (currentStatus, playerId, status, fantamilioni
  * @returns {Object|null} Dettagli del giocatore o null se non trovato
  */
 export const getPlayerDetails = (playerStatus, playerId) => {
-  return playerStatus[playerId] || null;
+  // Gestione sicura dell'oggetto undefined
+  const safePlayerStatus = playerStatus || {};
+  return safePlayerStatus[playerId] || null;
 };
 
 /**
@@ -106,8 +112,11 @@ export const getPlayerDetails = (playerStatus, playerId) => {
  * @returns {Array} Array di oggetti con playerId, status e fantamilioni
  */
 export const getAcquiredPlayers = (playerStatus) => {
-  return Object.entries(playerStatus)
-    .filter(([_, data]) => data.status === 'acquired')
+  // Gestione sicura dell'oggetto undefined
+  const safePlayerStatus = playerStatus || {};
+  
+  return Object.entries(safePlayerStatus)
+    .filter(([_, data]) => data && data.status === 'acquired')
     .map(([playerId, data]) => ({
       playerId,
       ...data
@@ -169,20 +178,23 @@ export const clearPlayerStatus = () => {
  * @returns {string} JSON string dei dati
  */
 export const exportPlayerStatus = (playerStatus, playersData = []) => {
+  // Gestione sicura dell'oggetto undefined
+  const safePlayerStatus = playerStatus || {};
+  
   const exportData = {
     version: '2.0', // Aggiornato per nuova struttura con fantamilioni
     timestamp: new Date().toISOString(),
-    data: playerStatus,
+    data: safePlayerStatus,
     summary: {
-      totalPlayers: Object.keys(playerStatus).length,
-      acquiredPlayers: getAcquiredPlayers(playerStatus).length,
-      totalFantamilioni: getTotalFantamilioni(playerStatus)
+      totalPlayers: Object.keys(safePlayerStatus).length,
+      acquiredPlayers: getAcquiredPlayers(safePlayerStatus).length,
+      totalFantamilioni: getTotalFantamilioni(safePlayerStatus)
     }
   };
   
   // Aggiunge nomi leggibili se disponibili
   if (playersData.length > 0) {
-    exportData.readableData = Object.entries(playerStatus).map(([playerId, data]) => {
+    exportData.readableData = Object.entries(safePlayerStatus).map(([playerId, data]) => {
       const player = playersData.find(p => p.id === playerId);
       return {
         playerId,
