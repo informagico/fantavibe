@@ -1,12 +1,11 @@
-// src/components/FantamilioniModal.js
+// src/components/FantamilioniModal.js - Versione corretta
 import { X } from 'lucide-react';
 import React, { useState } from 'react';
 
 const FantamilioniModal = ({ 
-  isOpen, 
-  onClose, 
-  playerName, 
-  onConfirm 
+  player,           // Cambiato da playerName a player
+  onConfirm,        // Manteniamo onConfirm come da App.js
+  onCancel          // Cambiato da onClose a onCancel come da App.js
 }) => {
   const [fantamilioni, setFantamilioni] = useState('');
   const [error, setError] = useState('');
@@ -32,16 +31,19 @@ const FantamilioniModal = ({
     // Reset del form
     setFantamilioni('');
     setError('');
-    onClose();
   };
 
   const handleClose = () => {
     setFantamilioni('');
     setError('');
-    onClose();
+    onCancel(); // Cambiato da onClose a onCancel
   };
 
-  if (!isOpen) return null;
+  // Rimuoviamo il controllo isOpen perché in App.js la modal viene mostrata condizionalmente
+  // con {showFantamilioniModal && <FantamilioniModal ... />}
+  
+  // Ottieni il nome del giocatore dall'oggetto player
+  const playerName = player ? (player.Nome || player.name || 'Giocatore sconosciuto') : 'Giocatore sconosciuto';
 
   const overlayStyle = {
     position: 'fixed',
@@ -79,7 +81,8 @@ const FantamilioniModal = ({
   const titleStyle = {
     fontSize: '1.25rem',
     fontWeight: '600',
-    color: '#111827'
+    color: '#111827',
+    margin: 0
   };
 
   const closeButtonStyle = {
@@ -114,17 +117,19 @@ const FantamilioniModal = ({
     fontSize: '0.875rem',
     fontWeight: '500',
     color: '#374151',
-    marginBottom: '0.5rem'
+    marginBottom: '0.5rem',
+    display: 'block'
   };
 
   const inputStyle = {
-    width: '93%',
+    width: '100%',
     padding: '0.75rem',
     border: error ? '2px solid #ef4444' : '2px solid #e5e7eb',
     borderRadius: '8px',
     fontSize: '1rem',
     outline: 'none',
-    transition: 'border-color 0.2s'
+    transition: 'border-color 0.2s',
+    boxSizing: 'border-box'
   };
 
   const errorStyle = {
@@ -198,17 +203,11 @@ const FantamilioniModal = ({
               }}
               placeholder="es. 25"
               style={inputStyle}
-              onFocus={(e) => {
-                if (!error) e.target.style.borderColor = '#3b82f6';
-              }}
-              onBlur={(e) => {
-                if (!error) e.target.style.borderColor = '#e5e7eb';
-              }}
               autoFocus
             />
             {error && <div style={errorStyle}>{error}</div>}
           </div>
-
+          
           <div style={buttonContainerStyle}>
             <button
               type="button"
