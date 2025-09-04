@@ -59,15 +59,15 @@ const RosaAcquistata = ({
   // Gestori eventi
   const handleRemovePlayer = (playerId) => {
     if (window.confirm('Sei sicuro di voler rimuovere questo giocatore dalla rosa?')) {
-      onPlayerStatusChange(playerId, 'available');
+      onPlayerStatusChange(playerId, 'none');
     }
   };
 
   // Stili
   const containerStyle = {
-    padding: '2rem',
-    maxWidth: '1200px',
-    margin: '0 auto'
+    width: '80%',
+    margin: '0 auto',
+    padding: '1rem'
   };
 
   const headerStyle = {
@@ -77,98 +77,62 @@ const RosaAcquistata = ({
 
   const titleStyle = {
     fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#1e293b',
-    marginBottom: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.75rem'
-  };
-
-  const summaryStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '3rem',
-    marginBottom: '2rem',
-    flexWrap: 'wrap'
-  };
-
-  const summaryItemStyle = {
-    textAlign: 'center',
-    padding: '1rem',
-    backgroundColor: '#f8fafc',
-    borderRadius: '12px',
-    border: '1px solid #e2e8f0',
-    minWidth: '120px'
-  };
-
-  const summaryValueStyle = {
-    fontSize: '2rem',
-    fontWeight: 'bold',
-    color: '#3b82f6',
-    marginBottom: '0.25rem'
-  };
-
-  const summaryLabelStyle = {
-    fontSize: '0.875rem',
-    color: '#64748b',
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: '0.05em'
+    fontWeight: '700',
+    color: '#1f2937',
+    margin: '0 0 1rem 0'
   };
 
   const rolesGridStyle = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-    gap: '2rem',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+    gap: '1.5rem',
     marginTop: '2rem'
   };
 
   const roleCardStyle = {
     backgroundColor: 'white',
-    border: '2px solid #e2e8f0',
-    borderRadius: '16px',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb',
     overflow: 'hidden',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-    transition: 'all 0.2s'
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
   };
 
   const roleHeaderStyle = {
-    padding: '1rem 1.5rem',
+    padding: '1rem',
     backgroundColor: '#f8fafc',
-    borderBottom: '1px solid #e2e8f0',
+    borderBottom: '1px solid #e5e7eb',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center'
   };
 
   const roleTitleStyle = {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: '#1e293b',
+    fontSize: '1.125rem',
+    fontWeight: '600',
+    color: '#1f2937',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem'
   };
 
   const roleStatsStyle = {
-    display: 'flex',
-    gap: '1rem',
     fontSize: '0.875rem',
-    color: '#64748b'
+    color: '#6b7280',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
   };
 
   const playersListStyle = {
-    padding: '0'
+    minHeight: '120px'
   };
 
   const playerItemStyle = {
-    padding: '1rem 1.5rem',
-    borderBottom: '1px solid #f1f5f9',
+    padding: '1rem',
+    borderBottom: '1px solid #f3f4f6',
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     transition: 'background-color 0.2s'
   };
 
@@ -177,28 +141,27 @@ const RosaAcquistata = ({
   };
 
   const playerNameStyle = {
-    fontSize: '1rem',
     fontWeight: '600',
-    color: '#1e293b',
+    color: '#1f2937',
     marginBottom: '0.25rem'
   };
 
   const playerDetailsStyle = {
     fontSize: '0.875rem',
-    color: '#64748b'
+    color: '#6b7280'
   };
 
   const playerPriceStyle = {
-    fontSize: '1.125rem',
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#dc2626',
-    marginRight: '1rem'
+    marginRight: '1rem',
+    fontSize: '0.875rem'
   };
 
   const removeButtonStyle = {
-    padding: '0.5rem',
+    padding: '0.25rem 0.5rem',
+    border: '1px solid #e5e7eb',
     backgroundColor: 'transparent',
-    border: '1px solid #ef4444',
     borderRadius: '6px',
     color: '#ef4444',
     cursor: 'pointer',
@@ -261,33 +224,11 @@ const RosaAcquistata = ({
 
   return (
     <div style={containerStyle}>
-      {/* Header */}
+      {/* Header senza statistiche */}
       <div style={headerStyle}>
         <h1 style={titleStyle}>
           👥 Rosa Acquistata
         </h1>
-        
-        {/* Statistiche generali */}
-        <div style={summaryStyle}>
-          <div style={summaryItemStyle}>
-            <div style={summaryValueStyle}>{totalPlayers}</div>
-            <div style={summaryLabelStyle}>Giocatori</div>
-          </div>
-          
-          <div style={summaryItemStyle}>
-            <div style={{ ...summaryValueStyle, color: '#dc2626' }}>
-              {totalFantamilioni}
-            </div>
-            <div style={summaryLabelStyle}>Fantamilioni</div>
-          </div>
-          
-          <div style={summaryItemStyle}>
-            <div style={{ ...summaryValueStyle, color: '#059669' }}>
-              {totalPlayers > 0 ? Math.round(totalFantamilioni / totalPlayers) : 0}
-            </div>
-            <div style={summaryLabelStyle}>Media FM</div>
-          </div>
-        </div>
       </div>
 
       {/* Griglia ruoli */}

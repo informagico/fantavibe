@@ -25,7 +25,7 @@ const Header = ({ dataCount = 0, playerStatus = {}, budget = 500, onBudgetChange
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `fantacalcio_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `fantavibe_${new Date().toISOString().split('T')[0]}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -230,13 +230,13 @@ const Header = ({ dataCount = 0, playerStatus = {}, budget = 500, onBudgetChange
             </div>
             
             <div style={statStyle}>
-              <div style={statValueStyle}>{totalFantamilioni}</div>
-              <div style={statLabelStyle}>Spesi</div>
-            </div>
-            
-            <div style={statStyle}>
               <div style={statValueStyle}>{unavailablePlayers}</div>
               <div style={statLabelStyle}>Non Disp.</div>
+            </div>
+
+            <div style={statStyle}>
+              <div style={statValueStyle}>{(totalFantamilioni / totalAcquired).toFixed(1)}</div>
+              <div style={statLabelStyle}>Media FM</div>
             </div>
           </div>
         )}
