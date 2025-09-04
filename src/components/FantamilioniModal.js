@@ -5,7 +5,7 @@ const FantamilioniModal = ({
   player, 
   onConfirm, 
   onCancel,
-  maxFantamilioni = 500  // NUOVO: fantamilioni massimi disponibili nel budget
+  maxFantamilioni
 }) => {
   const [fantamilioni, setFantamilioni] = useState('');
   const [error, setError] = useState('');

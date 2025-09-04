@@ -300,13 +300,13 @@ const App = () => {
         )}
       </div>
 
-      {/* Modal per fantamilioni */}
-      {showFantamilioniModal && playerToAcquire && (
+      {/* Modal Fantamilioni */}
+      {showFantamilioniModal && (
         <FantamilioniModal
           player={playerToAcquire}
           onConfirm={handleFantamilioniConfirm}
           onCancel={handleFantamilioniCancel}
-          remainingBudget={budget - getTotalFantamilioni(playerStatus)}
+          maxFantamilioni={budget - getTotalFantamilioni(playerStatus)} // ← Questo è corretto!
         />
       )}
     </div>
