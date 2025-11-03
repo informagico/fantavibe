@@ -1,5 +1,5 @@
 import React from 'react';
-import { getExpectedGoals, getGoalsLabel, getPlayerSkills, SKILLS_MAPPING } from '../utils/dataUtils';
+import { getExpectedGoals, getGoalsLabel, SKILLS_MAPPING } from '../utils/dataUtils';
 import { getPlayerDetails } from '../utils/storage';
 
 const PlayerCard = ({ 
@@ -15,9 +15,6 @@ const PlayerCard = ({
 
   // Controlla se il giocatore è infortunato
   const isInjured = player.Infortunato === true;
-
-  // Skills del giocatore
-  const playerSkills = getPlayerSkills(player);
 
   const handleStatusChange = (newStatus) => {
     if (newStatus === 'acquired' && onAcquire) {
@@ -123,6 +120,9 @@ const PlayerCard = ({
     
     return [];
   };
+
+  // Estrae le skills dal player object
+  const playerSkills = processSkills(player.Skills);
 
   // Statistiche base (sempre visibili)
   const baseStats = [
@@ -270,11 +270,6 @@ const PlayerCard = ({
     lineHeight: '1'
   };
 
-  // Stili per le skills
-  const skillsContainerStyle = {
-    marginBottom: '1rem'
-  };
-
   const skillsLabelStyle = {
     fontSize: '0.75rem',
     fontWeight: '600',
@@ -335,6 +330,14 @@ const PlayerCard = ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.25rem'
+  };
+
+  // Stili per le skills
+  const skillsContainerStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.25rem',
+    marginBottom: '0.75rem'
   };
 
   const skillItemStyle = {

@@ -100,18 +100,6 @@ const PlayersTab = ({
     setSearchTerm('');
   };
 
-  // Nuovi handlers per filtri e ordinamento
-  const handleSortChange = (field) => {
-    if (field === sortField) {
-      // Se è lo stesso campo, inverti la direzione
-      setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc');
-    } else {
-      // Se è un campo diverso, imposta il nuovo campo con direzione decrescente
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  };
-
   const handleNumericFiltersChange = (filters) => {
     setNumericFilters(filters);
   };

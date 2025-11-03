@@ -252,12 +252,6 @@ const FilterPanel = ({
     marginBottom: '0.5rem'
   };
 
-  const checkboxStyle = {
-    width: '18px',
-    height: '18px',
-    accentColor: '#3b82f6'
-  };
-
   const buttonStyle = {
     display: 'flex',
     alignItems: 'center',
