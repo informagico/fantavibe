@@ -1,6 +1,6 @@
 import { Search } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import { filterPlayersByRole, searchPlayers, sortPlayersByField, applyAllFilters, SORT_OPTIONS } from '../utils/dataUtils';
+import { applyAllFilters, filterPlayersByRole, searchPlayers, SORT_OPTIONS, sortPlayersByField } from '../utils/dataUtils';
 import FilterPanel from './FilterPanel';
 import PlayerCard from './PlayerCard';
 
@@ -35,9 +35,6 @@ const PlayersTab = ({
     { key: 'CEN_TRQ', label: 'Centro + Trequartisti', emoji: '🎭' },
     { key: 'ATT', label: 'Attaccanti', emoji: '⚽' }
   ];
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showDetailedMode, setShowDetailedMode] = useState(false);
 
   const rolesDescription = (roleKey) => {
     const role = roles.find(r => r.key === roleKey);

@@ -1,6 +1,6 @@
 import React from 'react';
-import { getPlayerDetails } from '../utils/storage';
 import { getExpectedGoals, getGoalsLabel, getPlayerSkills, SKILLS_MAPPING } from '../utils/dataUtils';
+import { getPlayerDetails } from '../utils/storage';
 
 const PlayerCard = ({ 
   player, 
@@ -123,9 +123,6 @@ const PlayerCard = ({
     
     return [];
   };
-
-  // Estrae le skills dal player object
-  const playerSkills = processSkills(player.Skills);
 
   // Statistiche base (sempre visibili)
   const baseStats = [
@@ -338,14 +335,6 @@ const PlayerCard = ({
     alignItems: 'center',
     justifyContent: 'center',
     gap: '0.25rem'
-  };
-
-  // Stili per le skills
-  const skillsContainerStyle = {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '0.25rem',
-    marginBottom: '0.75rem'
   };
 
   const skillItemStyle = {
