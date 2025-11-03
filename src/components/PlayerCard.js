@@ -1,5 +1,6 @@
 import React from 'react';
 import { getPlayerDetails } from '../utils/storage';
+import { getExpectedGoals, getGoalsLabel, getPlayerSkills, SKILLS_MAPPING } from '../utils/dataUtils';
 
 const PlayerCard = ({ 
   player, 
@@ -14,6 +15,9 @@ const PlayerCard = ({
 
   // Controlla se il giocatore è infortunato
   const isInjured = player.Infortunato === true;
+
+  // Skills del giocatore
+  const playerSkills = getPlayerSkills(player);
 
   const handleStatusChange = (newStatus) => {
     if (newStatus === 'acquired' && onAcquire) {
@@ -130,13 +134,16 @@ const PlayerCard = ({
   ];
 
   // Statistiche complete (visibili quando showAllStats è true)
+  const expectedGoals = getExpectedGoals(player);
+  const goalsLabel = getGoalsLabel(player.Ruolo);
+  
   const allStats = [
     ...baseStats,
     { key: 'convenienza', label: 'Convenienza', value: player['Convenienza']?.toFixed(2) || 'N/A' },
     { key: 'punteggio', label: 'Punteggio', value: player.punteggio || player.Punteggio || 'N/A' },
     { key: 'presenze_previste', label: 'Presenze Previste', value: player['Presenze previste'] || 'N/A' },
     { key: 'presenze', label: 'Presenze AP', value: player.presenze || player['Presenze campionato corrente'] || 'N/A' },
-    { key: 'gol', label: 'Gol Previsti', value: player['Gol previsti'] || 'N/A' },
+    { key: 'gol', label: goalsLabel, value: expectedGoals !== null ? expectedGoals : 'N/A' },
     { key: 'assist', label: 'Assist Previsti', value: player['Assist previsti'] || 'N/A' },
     { key: 'buon_investimento', label: 'Buon Investimento', value: player['Buon investimento'] || 'N/A' },
     { key: 'resistenza', label: 'Resistenza Infortuni', value: player['Resistenza infortuni'] || 'N/A' },
@@ -333,6 +340,23 @@ const PlayerCard = ({
     gap: '0.25rem'
   };
 
+  // Stili per le skills
+  const skillsContainerStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.25rem',
+    marginBottom: '0.75rem'
+  };
+
+  const skillItemStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontSize: '1rem',
+    cursor: 'help',
+    transition: 'transform 0.2s',
+    filter: 'grayscale(0.2)',
+  };
+
   const trend = player.Trend === 'UP' ? '📈 ' : player.Trend === 'DOWN' ? '📉 ' : player.Trend === 'STABLE' ? '🟰 ' : '';
 
   return (
@@ -364,6 +388,32 @@ const PlayerCard = ({
           <div style={roleStyle}>{player.Ruolo}</div>
         </div>
       </div>
+
+      {/* Skills del giocatore */}
+      {playerSkills.length > 0 && (
+        <div style={skillsContainerStyle}>
+          {playerSkills.map((skill, index) => {
+            const skillData = SKILLS_MAPPING[skill] || { emoji: '❓', description: skill };
+            return (
+              <span
+                key={index}
+                style={skillItemStyle}
+                title={skillData.description}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'scale(1.2)';
+                  e.target.style.filter = 'grayscale(0)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'scale(1)';
+                  e.target.style.filter = 'grayscale(0.2)';
+                }}
+              >
+                {skillData.emoji}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {/* Stats dinamiche - CONTROLLATE ESTERNAMENTE */}
       <div style={statsStyle}>

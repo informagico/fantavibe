@@ -27,3 +27,4 @@ yarn-error.log*
 
 # end
 .env
+public/~$fpedia_analysis.xlsx

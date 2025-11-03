@@ -70,6 +70,27 @@ npm install
 npm start
 ```
 
+### Testing
+
+```bash
+# Esegui tutti i test
+npm test
+
+# Test in modalità watch per sviluppo
+npm test:watch
+
+# Verifica build
+npm run build
+```
+
+### Netlify functions
+
+Per eseguire il debug utilizzando le netlify function
+
+```bash
+npm run netlify-dev
+```
+
 ### Utilizzo
 
 1. **Carica i dati**: L'app cerca automaticamente `fpedia_analysis.xlsx` nella cartella `public/`

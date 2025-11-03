@@ -131,7 +131,10 @@ export const getAcquiredPlayers = (playerStatus) => {
  */
 export const getTotalFantamilioni = (playerStatus) => {
   const acquired = getAcquiredPlayers(playerStatus);
-  return acquired.reduce((total, player) => total + (player.fantamilioni || 0), 0);
+  return acquired.reduce((total, player) => {
+    const fantamilioni = Number(player.fantamilioni);
+    return total + (isNaN(fantamilioni) ? 0 : fantamilioni);
+  }, 0);
 };
 
 // ============== NUOVE FUNZIONI BUDGET ==============
@@ -143,7 +146,10 @@ export const getTotalFantamilioni = (playerStatus) => {
 export const loadBudget = () => {
   try {
     const saved = localStorage.getItem(BUDGET_STORAGE_KEY);
-    return saved ? parseInt(saved) : 500;
+    if (!saved) return 500;
+    
+    const parsed = parseInt(saved);
+    return isNaN(parsed) ? 500 : parsed;
   } catch (error) {
     console.warn('Errore nel caricamento del budget:', error);
     return 500;
