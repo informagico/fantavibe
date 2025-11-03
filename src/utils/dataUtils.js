@@ -213,17 +213,17 @@ export const getGoalsLabel = (role) => {
  * Mappatura delle skills con emoji e descrizioni
  */
 export const SKILLS_MAPPING = {
-  'Buona Media': { emoji: '👍', description: 'Buona Media: Giocatore con buona fantamedia' },
-  'Piazzati': { emoji: '🦅', description: 'Piazzati: Specialista nei calci piazzati' },
-  'Giovane talento': { emoji: '🌱', description: 'Giovane talento: Talento emergente con margini di crescita' },
-  'Panchinaro': { emoji: '🪑', description: 'Panchinaro: Spesso in panchina, minuti limitati' },
-  'Titolare': { emoji: '💎', description: 'Titolare: Giocatore titolare fisso nella sua squadra' },
-  'Rigorista': { emoji: '🎯', description: 'Rigorista: Specialista nei calci di rigore' },
-  'Outsider': { emoji: '🌟', description: 'Outsider: Giocatore fuori dai radar con grande potenziale' },
-  'Assistman': { emoji: '🎨', description: 'Assistman: Creatore di gioco, fornisce assist decisivi' },
-  'Falloso': { emoji: '🚫', description: 'Falloso: Giocatore soggetto a molti falli/cartellini' },
-  'Fuoriclasse': { emoji: '👑', description: 'Fuoriclasse: Giocatore di livello superiore, sempre affidabile' },
-  'Goleador': { emoji: '⚡', description: 'Goleador: Finalizzatore nato, specialista in zona gol' }
+  'BUONA MEDIA': { emoji: '👍', description: 'Buona Media: Giocatore con buona fantamedia' },
+  'PIAZZATI': { emoji: '🦅', description: 'Piazzati: Specialista nei calci piazzati' },
+  'GIOVANE TALENTO': { emoji: '🌱', description: 'Giovane talento: Talento emergente con margini di crescita' },
+  'PANCHINARO': { emoji: '🪑', description: 'Panchinaro: Spesso in panchina, minuti limitati' },
+  'TITOLARE': { emoji: '💎', description: 'Titolare: Giocatore titolare fisso nella sua squadra' },
+  'RIGORISTA': { emoji: '🎯', description: 'Rigorista: Specialista nei calci di rigore' },
+  'OUTSIDER': { emoji: '🌟', description: 'Outsider: Giocatore fuori dai radar con grande potenziale' },
+  'ASSISTMAN': { emoji: '🎨', description: 'Assistman: Creatore di gioco, fornisce assist decisivi' },
+  'FALLOSO': { emoji: '🚫', description: 'Falloso: Giocatore soggetto a molti falli/cartellini' },
+  'FUORICLASSE': { emoji: '👑', description: 'Fuoriclasse: Giocatore di livello superiore, sempre affidabile' },
+  'GOLEADOR': { emoji: '⚡', description: 'Goleador: Finalizzatore nato, specialista in zona gol' }
 };
 
 /**
