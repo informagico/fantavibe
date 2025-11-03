@@ -28,7 +28,7 @@ const App = () => {
   const [playerToAcquire, setPlayerToAcquire] = useState(null);
 
   // Stato per preservare la selezione del ruolo tra i cambi di tab
-  const [selectedRole, setSelectedRole] = useState('POR');
+  const [selectedRole, setSelectedRole] = useState('ALL');
 
   // Carica status giocatori all'avvio
   useEffect(() => {
@@ -186,6 +186,13 @@ const App = () => {
     backgroundColor: '#f8fafc'
   };
 
+  const stickyHeaderWrapperStyle = {
+    position: 'sticky',
+    top: '0',
+    zIndex: 1000,
+    backgroundColor: 'white'
+  };
+
   const tabsContainerStyle = {
     display: 'flex',
     justifyContent: 'center',
@@ -223,42 +230,45 @@ const App = () => {
 
   return (
     <div style={containerStyle} dataUpdateInfo={dataUpdateInfo}>
-      {/* Header con Budget integrato */}
-      <Header 
-        dataCount={normalizedData.length}
-        playerStatus={playerStatus}
-        budget={budget}
-        onBudgetChange={setBudget}
-        dataUpdateInfo={dataUpdateInfo}
-      />
+      {/* Sticky wrapper containing both header and tabs */}
+      <div style={stickyHeaderWrapperStyle}>
+        {/* Header con Budget integrato */}
+        <Header 
+          dataCount={normalizedData.length}
+          playerStatus={playerStatus}
+          budget={budget}
+          onBudgetChange={setBudget}
+          dataUpdateInfo={dataUpdateInfo}
+        />
 
-      {/* Navigation Tabs - solo se ci sono dati */}
-      {normalizedData.length > 0 && (
-        <div style={tabsContainerStyle}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={activeTab === tab.id ? activeTabStyle : tabButtonStyle}
-              onMouseEnter={(e) => {
-                if (activeTab !== tab.id) {
-                  e.target.style.color = '#374151';
-                  e.target.style.backgroundColor = '#f8fafc';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (activeTab !== tab.id) {
-                  e.target.style.color = '#64748b';
-                  e.target.style.backgroundColor = 'transparent';
-                }
-              }}
-            >
-              <span style={{ fontSize: '1.125rem' }}>{tab.emoji}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
+        {/* Navigation Tabs - solo se ci sono dati */}
+        {normalizedData.length > 0 && (
+          <div style={tabsContainerStyle}>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={activeTab === tab.id ? activeTabStyle : tabButtonStyle}
+                onMouseEnter={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.color = '#374151';
+                    e.target.style.backgroundColor = '#f8fafc';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeTab !== tab.id) {
+                    e.target.style.color = '#64748b';
+                    e.target.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <span style={{ fontSize: '1.125rem' }}>{tab.emoji}</span>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Tab Content */}
       <div style={tabContentStyle}>
@@ -276,8 +286,8 @@ const App = () => {
 
         {error && (
           <div style={{
-            padding: '2rem',
-            margin: '2rem auto',
+            padding: '1rem',
+            margin: '1rem auto',
             maxWidth: '600px',
             backgroundColor: '#fef2f2',
             border: '1px solid #fecaca',
@@ -321,7 +331,7 @@ const App = () => {
                 onRoleChange={setSelectedRole}
               />
             )}
-
+            
             {activeTab === 'rosa' && (
               <RosaAcquistata
                 players={normalizedData}

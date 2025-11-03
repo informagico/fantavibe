@@ -7,6 +7,7 @@
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
+    "core-js-pure": "^3.38.0",
     "lucide-react": "^0.542.0",
     "node-fetch": "^3.3.2",
     "react": "^19.1.1",
@@ -40,5 +41,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.10"
   }
 }

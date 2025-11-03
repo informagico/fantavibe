@@ -47,8 +47,16 @@ const createSearchIndex = (players) => {
     const words = normalizedName.split(' ')
       .concat(normalizedSquadra.split(' '));
 
-    if (player.Infortunato === 'true') {
+    if (player.Infortunato === true) {
       words.push('infortunato');
+    }
+
+    if (player['Consigliato prossima giornata'] === true) {
+      words.push('consigliato');
+    }
+
+    if (player['Nuovo acquisto'] === true) {
+      words.push('nuovo');
     }
 
     // Indicizza squadra normalizzata
@@ -164,7 +172,362 @@ export const normalizePlayerData = (fpediaData) => {
  * Filtra giocatori per ruolo
  */
 export const filterPlayersByRole = (players, role) => {
+  if (role === 'ALL') {
+    return players; // Mostra tutti i giocatori
+  }
+  if (role === 'CEN_TRQ') {
+    return players.filter(player => player.Ruolo === 'CEN' || player.Ruolo === 'TRQ');
+  }
   return players.filter(player => player.Ruolo === role);
+};
+
+/**
+ * Calcola i gol previsti con logica specifica per i portieri
+ * I portieri hanno i gol come valori negativi (gol subiti)
+ */
+export const getExpectedGoals = (player) => {
+  const golPrevisti = player['Gol previsti'];
+  
+  // Se non c'è il dato, restituisce null per mostrare 'N/A'
+  if (golPrevisti === undefined || golPrevisti === null || golPrevisti === '' || isNaN(parseFloat(golPrevisti))) {
+    return null;
+  }
+  
+  const numericValue = parseFloat(golPrevisti);
+  
+  // Per i portieri, convertiamo i gol in valori negativi
+  if (player.Ruolo === 'POR') {
+    return -Math.abs(numericValue);
+  }
+  return numericValue;
+};
+
+/**
+ * Ottiene la label appropriata per i gol previsti in base al ruolo
+ */
+export const getGoalsLabel = (role) => {
+  return role === 'POR' ? 'Gol Subiti Previsti' : 'Gol Previsti';
+};
+
+/**
+ * Mappatura delle skills con emoji e descrizioni
+ */
+export const SKILLS_MAPPING = {
+  'Buona Media': { emoji: '👍', description: 'Buona Media: Giocatore con buona fantamedia' },
+  'Piazzati': { emoji: '🦅', description: 'Piazzati: Specialista nei calci piazzati' },
+  'Giovane talento': { emoji: '🌱', description: 'Giovane talento: Talento emergente con margini di crescita' },
+  'Panchinaro': { emoji: '🪑', description: 'Panchinaro: Spesso in panchina, minuti limitati' },
+  'Titolare': { emoji: '💎', description: 'Titolare: Giocatore titolare fisso nella sua squadra' },
+  'Rigorista': { emoji: '🎯', description: 'Rigorista: Specialista nei calci di rigore' },
+  'Outsider': { emoji: '🌟', description: 'Outsider: Giocatore fuori dai radar con grande potenziale' },
+  'Assistman': { emoji: '🎨', description: 'Assistman: Creatore di gioco, fornisce assist decisivi' },
+  'Falloso': { emoji: '🚫', description: 'Falloso: Giocatore soggetto a molti falli/cartellini' },
+  'Fuoriclasse': { emoji: '👑', description: 'Fuoriclasse: Giocatore di livello superiore, sempre affidabile' },
+  'Goleador': { emoji: '⚡', description: 'Goleador: Finalizzatore nato, specialista in zona gol' }
+};
+
+/**
+ * Estrae e processa le skills di un giocatore
+ */
+export const getPlayerSkills = (player) => {
+  // Prova diversi nomi di colonna possibili
+  const skillsData = player.Skills || player.skills || player.Skill || player.skill || 
+                     player.Attributi || player.attributi || player.Tags || player.tags;
+  
+  if (!skillsData) return [];
+  
+  // Se è una stringa, prova a parsare come JSON o dividere per separatori
+  if (typeof skillsData === 'string') {
+    // Prima pulisce la stringa da parentesi quadre e apici
+    let cleanedString = skillsData.trim();
+    
+    // Rimuove parentesi quadre esterne se presenti
+    if (cleanedString.startsWith('[') && cleanedString.endsWith(']')) {
+      cleanedString = cleanedString.slice(1, -1);
+    }
+    
+    try {
+      // Prova parsing JSON (aggiungendo le parentesi quadre se necessario)
+      const jsonString = cleanedString.startsWith('[') ? cleanedString : `[${cleanedString}]`;
+      const parsed = JSON.parse(jsonString);
+      return Array.isArray(parsed) ? parsed : [skillsData];
+    } catch {
+      // Se non è JSON, dividi per virgole e pulisci apici/spazi
+      return cleanedString
+        .split(/[,|;]/)
+        .map(s => s.trim().replace(/^['"]|['"]$/g, '')) // Rimuove apici all'inizio e fine
+        .filter(s => s);
+    }
+  }
+  
+  // Se è già un array, restituiscilo
+  if (Array.isArray(skillsData)) {
+    return skillsData;
+  }
+  
+  return [];
+};
+
+/**
+ * Opzioni di ordinamento disponibili
+ */
+export const SORT_OPTIONS = [
+  { key: 'convenienza', label: 'Convenienza Potenziale', field: 'convenienza' },
+  { key: 'fantamedia', label: 'Fantamedia 2024-2025', field: 'fantamedia' },
+  { key: 'presenze', label: 'Presenze', field: 'presenze' },
+  { key: 'punteggio', label: 'Punteggio', field: 'punteggio' },
+  { key: 'gol_previsti', label: 'Gol Previsti', field: 'Gol previsti', useExpectedGoals: true },
+  { key: 'assist_previsti', label: 'Assist Previsti', field: 'Assist previsti' },
+  { key: 'presenze_previste', label: 'Presenze Previste', field: 'Presenze previste' },
+  { key: 'resistenza', label: 'Resistenza Infortuni', field: 'Resistenza infortuni' },
+  { key: 'fm_tot_gare', label: 'Fantamedia 24-25/38 partite', field: 'FM su tot gare 2024-2025' }
+];
+
+/**
+ * Campi numerici filtrabili con range
+ */
+export const NUMERIC_FILTER_FIELDS = [
+  { key: 'convenienza', label: 'Convenienza Potenziale', field: 'convenienza', min: 0, max: 200 },
+  { key: 'fantamedia', label: 'Fantamedia 2024-2025', field: 'fantamedia', min: 0, max: 10 },
+  { key: 'presenze', label: 'Presenze', field: 'presenze', min: 0, max: 38 },
+  { key: 'punteggio', label: 'Punteggio', field: 'punteggio', min: 0, max: 100 },
+  { key: 'gol_previsti', label: 'Gol Previsti', field: 'Gol previsti', min: -30, max: 30, useExpectedGoals: true },
+  { key: 'assist_previsti', label: 'Assist Previsti', field: 'Assist previsti', min: 0, max: 20 },
+  { key: 'presenze_previste', label: 'Presenze Previste', field: 'Presenze previste', min: 0, max: 38 },
+  { key: 'resistenza', label: 'Resistenza Infortuni', field: 'Resistenza infortuni', min: 0, max: 100 },
+];
+
+/**
+ * Campi booleani filtrabili
+ */
+export const BOOLEAN_FILTER_FIELDS = [
+  { key: 'nuovo_acquisto', label: 'Nuovo Acquisto', field: 'Nuovo acquisto' },
+  { key: 'consigliato_prox', label: 'Consigliato Prossima Giornata', field: 'Consigliato prossima giornata' },
+  { key: 'infortunato', label: 'Infortunato', field: 'Infortunato' }
+];
+
+/**
+ * Campi categorici con valori numerici
+ */
+export const CATEGORICAL_FILTER_FIELDS = [
+  { 
+    key: 'buon_investimento', 
+    label: 'Buon Investimento', 
+    field: 'Buon investimento',
+    categories: [
+      { key: 'no', label: 'No', values: [20, 40] },
+      { key: 'si', label: 'Sì', values: [60, 80, 100] }
+    ]
+  }
+];
+
+/**
+ * Skills filtrabili disponibili
+ */
+export const SKILLS_FILTER_OPTIONS = [
+  { key: 'buona_media', label: 'Buona Media', skillName: 'Buona Media' },
+  { key: 'piazzati', label: 'Piazzati', skillName: 'Piazzati' },
+  { key: 'giovane_talento', label: 'Giovane Talento', skillName: 'Giovane talento' },
+  { key: 'panchinaro', label: 'Panchinaro', skillName: 'Panchinaro' },
+  { key: 'titolare', label: 'Titolare', skillName: 'Titolare' },
+  { key: 'rigorista', label: 'Rigorista', skillName: 'Rigorista' },
+  { key: 'outsider', label: 'Outsider', skillName: 'Outsider' },
+  { key: 'assistman', label: 'Assistman', skillName: 'Assistman' },
+  { key: 'falloso', label: 'Falloso', skillName: 'Falloso' },
+  { key: 'fuoriclasse', label: 'Fuoriclasse', skillName: 'Fuoriclasse' },
+  { key: 'goleador', label: 'Goleador', skillName: 'Goleador' }
+];
+
+/**
+ * Ordina giocatori in base al criterio specificato
+ */
+export const sortPlayersByField = (players, sortKey, sortDirection = 'desc') => {
+  // Trova l'opzione di ordinamento corrispondente
+  const sortOption = SORT_OPTIONS.find(option => option.key === sortKey);
+  if (!sortOption) {
+    console.warn(`Sort field ${sortKey} not found, using convenienza as fallback`);
+    return sortPlayersByField(players, 'convenienza', sortDirection);
+  }
+  
+  const sortField = sortOption.field;
+  
+  const sortedPlayers = [...players].sort((a, b) => {
+    let valueA, valueB;
+    
+    // Gestione speciale per i gol previsti
+    if (sortOption.useExpectedGoals) {
+      valueA = getExpectedGoals(a);
+      valueB = getExpectedGoals(b);
+      // Se uno dei valori è null, mettilo alla fine
+      if (valueA === null && valueB === null) return 0;
+      if (valueA === null) return 1;
+      if (valueB === null) return -1;
+    } else if (sortKey === 'convenienza' || sortKey === 'fantamedia' || 
+               sortKey === 'presenze' || sortKey === 'punteggio') {
+      // Campi normalizzati 
+      valueA = a[sortKey] || 0;
+      valueB = b[sortKey] || 0;
+    } else {
+      // Campi originali dalla struttura dati
+      valueA = a[sortField] || 0;
+      valueB = b[sortField] || 0;
+    }
+    
+    // Converti in numeri se necessario (solo se non stiamo già gestendo i gol previsti)
+    if (!sortOption.useExpectedGoals) {
+      if (typeof valueA === 'string') valueA = parseFloat(valueA) || 0;
+      if (typeof valueB === 'string') valueB = parseFloat(valueB) || 0;
+    }
+    
+    // Applica direzione di ordinamento
+    const result = valueB - valueA; // Default decrescente
+    return sortDirection === 'asc' ? -result : result;
+  });
+  
+  return sortedPlayers;
+};
+
+/**
+ * Applica filtri numerici (range) ai giocatori
+ */
+export const applyNumericFilters = (players, filters) => {
+  return players.filter(player => {
+    return NUMERIC_FILTER_FIELDS.every(field => {
+      const filter = filters[field.key];
+      if (!filter || filter.min === undefined || filter.max === undefined) return true;
+      
+      // IMPORTANTE: Ignora filtri che sono ancora ai valori di default
+      if (filter.min === field.min && filter.max === field.max) {
+        return true; // Filtro non modificato dall'utente, includi tutti
+      }
+      
+      let value;
+      // Gestione speciale per i gol previsti
+      if (field.useExpectedGoals) {
+        value = getExpectedGoals(player);
+        // Se il valore è null (dati mancanti), includi il giocatore nel risultato
+        if (value === null) return true;
+      } else if (field.key === 'convenienza' || field.key === 'fantamedia' || 
+                 field.key === 'presenze' || field.key === 'punteggio') {
+        // Usa i campi normalizzati per convenienza, fantamedia, presenze, punteggio
+        value = player[field.key] || 0;
+      } else {
+        // Per gli altri campi, usa il field name originale
+        value = player[field.field] || 0;
+      }
+      
+      // Converti in numeri se necessario (solo se non stiamo già gestendo i gol previsti)
+      if (!field.useExpectedGoals && typeof value === 'string') {
+        value = parseFloat(value) || 0;
+      }
+      
+      // Debug log per ogni confronto (solo per filtri modificati)
+      const isInRange = value >= filter.min && value <= filter.max;
+      if (!isInRange && field.key === 'fantamedia') { // Logga solo fantamedia per non spammare
+        console.log(`❌ Filtro ${field.label}:`, {
+          player: player.Nome,
+          rawValue: player[field.field],
+          normalizedValue: player[field.key],
+          processedValue: value,
+          valueType: typeof value,
+          filterMin: filter.min,
+          filterMax: filter.max,
+          isInRange
+        });
+      }
+      
+      return isInRange;
+    });
+  });
+};
+
+/**
+ * Applica filtri booleani ai giocatori
+ */
+export const applyBooleanFilters = (players, filters) => {
+  return players.filter(player => {
+    return BOOLEAN_FILTER_FIELDS.every(field => {
+      const filter = filters[field.key];
+      if (filter === undefined || filter === null) return true;
+      
+      const playerValue = player[field.field];
+      const normalizedValue = playerValue === 'true' || playerValue === true;
+      
+      return filter === normalizedValue;
+    });
+  });
+};
+
+/**
+ * Applica filtri categorici ai giocatori
+ */
+export const applyCategoricalFilters = (players, filters) => {
+  return players.filter(player => {
+    return CATEGORICAL_FILTER_FIELDS.every(field => {
+      const filter = filters[field.key];
+      if (filter === undefined || filter === null) return true;
+      
+      const playerValue = parseFloat(player[field.field]) || 0;
+      
+      // Trova la categoria corrispondente al filtro selezionato
+      const selectedCategory = field.categories.find(cat => cat.key === filter);
+      if (!selectedCategory) return true;
+      
+      // Controlla se il valore del giocatore è incluso nei valori della categoria
+      return selectedCategory.values.includes(playerValue);
+    });
+  });
+};
+
+/**
+ * Applica filtri per skills ai giocatori
+ */
+export const applySkillsFilters = (players, skillsFilters) => {
+  return players.filter(player => {
+    // Se non ci sono filtri skills attivi, includi tutti i giocatori
+    const activeSkillFilters = Object.entries(skillsFilters || {}).filter(([_, isActive]) => isActive);
+    if (activeSkillFilters.length === 0) return true;
+    
+    // Ottieni le skills del giocatore
+    const playerSkills = getPlayerSkills(player);
+    
+    // Il giocatore deve avere TUTTE le skills filtrate (AND logic)
+    return activeSkillFilters.every(([skillKey, _]) => {
+      const skillOption = SKILLS_FILTER_OPTIONS.find(option => option.key === skillKey);
+      if (!skillOption) return false;
+      
+      return playerSkills.includes(skillOption.skillName);
+    });
+  });
+};
+
+/**
+ * Applica tutti i filtri ai giocatori
+ */
+export const applyAllFilters = (players, numericFilters, booleanFilters, skillsFilters, categoricalFilters) => {
+  let filteredPlayers = players;
+  
+  // Applica filtri numerici
+  if (numericFilters && Object.keys(numericFilters).length > 0) {
+    filteredPlayers = applyNumericFilters(filteredPlayers, numericFilters);
+  }
+  
+  // Applica filtri booleani
+  if (booleanFilters && Object.keys(booleanFilters).length > 0) {
+    filteredPlayers = applyBooleanFilters(filteredPlayers, booleanFilters);
+  }
+  
+  // Applica filtri categorici
+  if (categoricalFilters && Object.keys(categoricalFilters).length > 0) {
+    filteredPlayers = applyCategoricalFilters(filteredPlayers, categoricalFilters);
+  }
+  
+  // Applica filtri skills
+  if (skillsFilters && Object.keys(skillsFilters).length > 0) {
+    filteredPlayers = applySkillsFilters(filteredPlayers, skillsFilters);
+  }
+  
+  return filteredPlayers;
 };
 
 /**
@@ -233,10 +596,11 @@ const searchPlayersOptimized = (players, searchIndex, searchTerm) => {
 };
 
 /**
- * Ordina giocatori per convenienza potenziale (decrescente)
+ * Ordina giocatori per convenienza potenziale (decrescente) - LEGACY FUNCTION
+ * Usa sortPlayersByField per nuove implementazioni
  */
 export const sortPlayersByConvenienza = (players) => {
-  return [...players].sort((a, b) => (b.convenienza || 0) - (a.convenienza || 0));
+  return sortPlayersByField(players, 'convenienza', 'desc');
 };
 
 /**

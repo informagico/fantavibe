@@ -114,9 +114,9 @@ const Header = ({
   // Stili
   const headerStyle = {
     backgroundColor: 'white',
-    borderBottom: '2px solid #e2e8f0',
+    borderBottom: '1px solid #e2e8f0',
     padding: '1rem 0',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+    width: '100%'
   };
 
   const containerStyle = {
